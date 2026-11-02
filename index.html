@@ -280,6 +280,35 @@ details.hist.rs{border-left-color:#0B7A6E}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .chip.me{outline:3px solid var(--ok);outline-offset:1px}
 .chip .x{font-size:20px;line-height:1;opacity:.8}
+.tcard.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.tcard .selmark{display:none;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--accent);padding:3px 10px;border-radius:999px;justify-self:start}
+.tcard.sel .selmark{display:inline-block}
+.trucks.pick{grid-template-columns:1fr;gap:10px}
+.trucks.pick .tcard{flex-direction:row;align-items:stretch;min-height:92px}
+.trucks.pick .tcard .pic{aspect-ratio:auto;width:128px;flex:none}
+.trucks.pick .tcard .meta{padding:10px 14px;gap:3px;align-content:center;min-width:0}
+.trucks.pick .tcard h2{font-size:24px}
+.trucks.pick .status{font-size:14px}
+@media (min-width:700px){.trucks.pick{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}}
+.hometiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px}
+@media (min-width:700px){.hometiles{grid-template-columns:repeat(3,1fr)}}
+.htile{display:grid;grid-template-columns:1fr;row-gap:4px;align-content:start;justify-items:start;text-align:left;min-height:96px;padding:14px;border-radius:16px;background:var(--panel);border:2px solid var(--line);color:var(--ink)}
+.htile .ti{width:44px;height:44px;margin-bottom:4px;border-radius:12px;display:grid;place-items:center;background:var(--bg);color:var(--accent)}
+.htile .ti svg{width:28px;height:28px}
+.htile b{font-size:20px;line-height:1.15}.htile small{color:var(--muted);font-size:14px;line-height:1.25}
+.htile.go{background:var(--accent);border-color:var(--accent);color:#fff}.htile.go .ti{background:rgba(255,255,255,.18);color:#fff}.htile.go small{color:rgba(255,255,255,.85)}
+.htile.rs .ti{color:#0B7A6E}
+.htile.adm{border-style:dashed}.htile.adm .ti{color:#E8590C}
+.htile.alert small{color:var(--crit,#C92A2A);font-weight:700}
+.htile.go.alert small{color:#fff}
+.homeh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:22px 0 4px;flex-wrap:wrap}
+.homeh .lbl{margin:0}
+.rep{display:grid;gap:10px}
+.repcard{display:grid;gap:8px;background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:14px;border-left-width:6px}
+.repcard .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.repstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.repstats div{background:var(--bg);border-radius:10px;padding:8px;text-align:center}
+.repstats b{display:block;font-size:24px;font-family:var(--f-mono)}.repstats span{font-size:13px;color:var(--muted)}
 .footbtns{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:22px}
 .setuplink{color:var(--muted);border:1.5px dashed var(--line);background:transparent}
 .credit{display:grid;gap:6px}
@@ -510,6 +539,9 @@ function truckArt(name){
 const IC={
   back:'<path d="M15 5l-7 7 7 7"/>', search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
   door:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M15 12h1"/>', cam:'<path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="4"/>',
+  clip:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM8.5 12.5l2 2 4-4"/>', plusbox:'<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M12 9v6M9 12h6"/>',
+  wrench:'<path d="M14.5 5.5a4 4 0 0 0 5 5L12 18a2.1 2.1 0 0 1-3-3l7.5-7.5a4 4 0 0 0-2-2z"/><path d="M5 19l2-2"/>', people:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.5c2.4.2 4 1.9 4.5 4.5"/>',
+  chart:'<path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/>', clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   bag:'<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>', box:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
   item:'<rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 9h6M9 13h6"/>', move:'<path d="M5 12h14M13 6l6 6-6 6"/>', phone:'<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>'
 };
@@ -583,7 +615,43 @@ function homeView(){
   const cards=trucks().map(t=>{ const s=truckState(t.id); const ph=photosFor('truck:'+t.id)[0];
     return '<button class="tcard" data-act="truck" data-t="'+t.id+'"><div class="pic">'+(ph?'<img src="'+esc(legacyThumb(ph))+'" alt="">':truckArt(t.name))+'</div><div class="meta"><h2>'+esc(t.name)+'</h2><span class="status st-'+s.st+'"><i class="dot"></i>'+esc(s.text)+'</span></div></button>'; }).join('');
   if(V.setup) return setupHome();
-  return topbar('Rig Check')+installCard()+'<p class="lbl" style="margin:4px 0 12px">Pick your truck</p><div class="trucks">'+cards+'</div><div class="footbtns"><button class="btn" data-act="crewpage">Crew credit</button>'+(isAdmin()?'<button class="btn setuplink" data-act="setupgate">Truck setup</button>':'')+'</div><div class="whoami">Signed in as <b>'+esc(me())+'</b>'+(who()&&who().role!=='crew'?' ('+who().role+')':'')+' · <button data-act="signout">'+(V.arm==='signout'?'Tap again to sign out':'Sign out')+'</button></div>';
+  return topbar('Rig Check')+installCard()+homePick()+homeTiles()+'<div class="whoami">Signed in as <b>'+esc(me())+'</b>'+(who()&&who().role!=='crew'?' ('+who().role+')':'')+' · <button data-act="signout">'+(V.arm==='signout'?'Tap again to sign out':'Sign out')+'</button></div>';
+}
+function ago(ts){ const m=Math.round((Date.now()-ts)/60000); if(m<60) return m<2?'just now':m+' min ago'; const h=Math.round(m/60); if(h<24) return h+' hr ago'; const d=Math.round(h/24); return d===1?'yesterday':d+' days ago'; }
+function homeUnit(){ const T=trucks(); if(!T.length) return null; let id=V.unit||ls.get('rc3-unit',''); if(!T.some(t=>t.id===id)) id=T[0].id; V.unit=id; return truck(id); }
+function homePick(){
+  const T=trucks(); const u=homeUnit();
+  if(!T.length) return '<div class="card empty"><b>No units yet.</b><span class="muted">'+(isAdmin()?'Tap Unit edit below to add your trucks.':'A supervisor adds the trucks in Unit edit.')+'</span></div>';
+  return '<p class="lbl" style="margin:4px 0 12px">'+(T.length>1?'Pick your unit':'Your unit')+'</p><div class="trucks pick">'+T.map(t=>{ const s=truckState(t.id); const ph=photosFor('truck:'+t.id)[0]; const on=u&&u.id===t.id;
+    return '<button class="tcard'+(on?' sel':'')+'" data-act="pickunit" data-t="'+t.id+'" aria-pressed="'+on+'"><div class="pic">'+(ph?'<img src="'+esc(legacyThumb(ph))+'" alt="">':truckArt(t.name))+'</div><div class="meta"><span class="selmark">Selected</span><h2>'+esc(t.name)+'</h2><span class="status st-'+s.st+'"><i class="dot"></i>'+esc(s.text)+'</span></div></button>'; }).join('')+'</div>';
+}
+function homeTiles(){
+  const u=homeUnit(); const adm=isAdmin();
+  const tile=(act,icon,title,sub,cls)=>'<button class="htile '+(cls||'')+'" data-act="'+act+'"><span class="ti">'+ico(icon)+'</span><b>'+title+'</b><small>'+sub+'</small></button>';
+  let rc='',rs='',hi='';
+  if(u){ const cur=curOf(u.id); const last=checksOf(u.id)[0];
+    if(cur){ const st=stats(truckItems(u.id),cur); rc=tile('hcheck','clip','Rig check','In progress · '+(st.pass+st.fail)+'/'+st.total,'go'+(st.fail?' alert':'')); }
+    else rc=tile('hcheck','clip','Rig check',last?'Last: '+ago(last.ts):'No checks yet','go');
+    const rx=RS()&&RS().tid===u.id?RS():null; const open=needsList(u.id).filter(x=>!x.done).length;
+    rs=tile('hrestock','plusbox','Restock',rx?'Restock in progress · '+Object.keys(rx.items||{}).length+' item'+(Object.keys(rx.items||{}).length===1?'':'s'):open?open+' item'+(open===1?'':'s')+' needed':'After a call','rs'+(open&&!rx?' alert':''));
+    const n=checksOf(u.id).length+restocksOf(u.id).length;
+    hi=tile('hhistory','clock','History',n?n+' check'+(n===1?'':'s')+' and restocks':'Nothing yet'); }
+  const tiles=[rc,rs,hi,tile('hreports','chart','Reports','All units · crew credit'),
+    adm?tile('hedit','wrench','Unit edit',u?'Set up '+esc(u.name):'Add units','adm'):'',
+    adm?tile('accesspage','people','People','Codes and access','adm'):''].join('');
+  return '<div class="homeh"><span class="lbl">'+(u?'What do you need on '+esc(u.name)+'?':'Menu')+'</span></div><div class="hometiles">'+tiles+'</div>';
+}
+function reportsView(){
+  const T=trucks(); const since=Date.now()-30*864e5;
+  const cards=T.map(t=>{ const last=checksOf(t.id)[0]; const cur=curOf(t.id); const open=needsList(t.id).filter(x=>!x.done); const crit=open.some(x=>x.critical);
+    const n30=checksOf(t.id).filter(k=>k.ts>=since).length, r30=restocksOf(t.id).filter(k=>k.ts>=since).length; const st=truckState(t.id);
+    return '<div class="repcard st-'+st.st+'" style="border-left-color:var(--s,'+(crit?'var(--crit,#C92A2A)':open.length?'#E8590C':'var(--ok)')+')"><div class="top"><b style="font-size:22px">'+esc(t.name)+'</b><span class="status st-'+st.st+'"><i class="dot"></i>'+esc(st.text)+'</span></div>'+
+      '<div class="muted" style="font-size:15px">'+(cur?'Check in progress, started '+fmtT(cur.started):last?'Last check '+fmtDT(last.ts)+(last.crew?' by '+esc(crewText(last.crew)):''):'No checks yet')+'</div>'+
+      '<div class="repstats"><div><b>'+open.length+'</b><span>Needed now</span></div><div><b>'+n30+'</b><span>Checks, 30 days</span></div><div><b>'+r30+'</b><span>Restocks, 30 days</span></div></div>'+
+      (open.length?'<div style="font-size:15px">'+open.slice(0,6).map(x=>esc(x.name)+(x.critical?' <b style="color:var(--crit,#C92A2A)">critical</b>':'')).join(' · ')+(open.length>6?' · +'+(open.length-6)+' more':'')+'</div>':'')+
+      '<div class="row"><button class="btn small" data-act="repneeds" data-t="'+t.id+'">Needed list</button><button class="btn small" data-act="rephist" data-t="'+t.id+'">History</button></div></div>'; }).join('');
+  return topbar('Reports','Home')+'<div class="stack" style="max-width:860px"><div class="row"><button class="btn" data-act="repcrew">'+ico('people')+' Crew credit</button>'+(isAdmin()?'<button class="btn" data-act="replog">'+ico('clock')+' Change log</button>':'')+'</div>'+
+    '<div class="lbl">Units</div><div class="rep">'+(cards||'<div class="card muted">No units yet.</div>')+'</div></div>';
 }
 function signinView(){
   return '<div class="signin">'+MARK+'<h1 style="font-size:36px">Rig Check</h1>'+(V.authMsg?'<div class="banner">'+esc(V.authMsg)+'</div>':'')+
@@ -605,7 +673,7 @@ function accessView(){
         '<div class="row"><button class="btn small" data-act="acccode" data-v="'+esc(pe.id)+'">New code</button><button class="btn small" data-act="accrole" data-v="'+esc(pe.id)+'" data-r="'+(pe.role==='supervisor'?'crew':'supervisor')+'">'+(pe.role==='supervisor'?'Make crew':'Make supervisor')+'</button><button class="btn small danger" data-act="accremove" data-v="'+esc(pe.id)+'">'+(V.arm==='rm'+pe.id?'Tap again to remove '+esc(pe.name):'Remove access')+'</button></div>')+'</div>'; }).join('');
   }
   const codeCard=V.newCode?'<div class="card stack" style="border-left:6px solid var(--ok)"><b>Give this code to '+esc(V.newCode.name)+'</b><div class="codebox">'+esc(V.newCode.code)+'</div><span class="hint">It works once, on one phone, for 7 days. They open Rig Check and type it in. Tap New code if they need to add another phone.</span><div class="row"><button class="btn small" data-act="copycode">Copy code</button><button class="btn small" data-act="hidecode">Done</button></div></div>':'';
-  return topbar('People & access','Setup')+'<div class="stack" style="max-width:760px">'+codeCard+
+  return topbar('People & access',V.setup?'Setup':'Home')+'<div class="stack" style="max-width:760px">'+codeCard+
     '<div class="card stack"><b>Add a person</b><div class="row"><input id="pname" class="sinp" placeholder="Name, e.g. J. Miller" style="flex:1;min-width:180px"><select id="prole" class="sinp" style="width:auto"><option value="crew">Crew</option><option value="supervisor">Supervisor</option></select><button class="btn small primary" data-act="accadd">Add and get code</button></div>'+
     '<p class="hint">Crew can do rig checks and restocks. Supervisors can also set up trucks and manage people. When someone leaves, tap Remove access: every phone they used stops working.</p></div>'+body+'</div>';
 }
@@ -640,7 +708,7 @@ function logView(){
   if(rows==null) body='<div class="loading">Loading the change log…</div>';
   else { const L=rows.filter(x=>!V.logTruck||x.truck===V.logTruck);
     body=L.length?'<div class="card" style="padding:6px 12px">'+L.map(x=>'<div class="logrow"><span class="when">'+new Date(x.t).toLocaleDateString([], {month:'short',day:'numeric'})+' '+fmtT(x.t)+'</span><span>'+esc(x.text)+'</span><span class="who">'+esc(x.by)+(x.tn&&!V.logTruck?' · '+esc(x.tn):'')+'</span></div>').join('')+'</div>':'<div class="card empty"><b>No changes yet.</b><span class="muted">Every change made in truck setup is listed here.</span></div>'; }
-  return topbar('Change log',V.setup?'Setup':'Trucks')+'<div class="stack">'+filt+body+'</div>';
+  return topbar('Change log',V.backTo==='reports'?'Reports':V.setup?'Setup':'Home')+'<div class="stack">'+filt+body+'</div>';
 }
 function crewPage(){
   const days=V.creditDays; const since=days?Date.now()-days*864e5:0;
@@ -650,7 +718,7 @@ function crewPage(){
   list('restocks/').filter(k=>k.ts>=since).forEach(k=>crewArr(k.crew).forEach(n=>{ T0(n); tally[n].rs++; }));
   const names=Object.keys(tally).sort((a,b)=>(tally[b].checks+tally[b].rs)-(tally[a].checks+tally[a].rs)||a.localeCompare(b));
   const seg='<div class="seg2" role="group">'+[[7,'7 days'],[30,'30 days'],[90,'90 days'],[0,'All time']].map(([d,l])=>'<button data-act="creditdays" data-v="'+d+'" aria-pressed="'+(days===d)+'">'+l+'</button>').join('')+'</div>';
-  return topbar('Crew credit','Trucks')+'<div class="stack">'+seg+
+  return topbar('Crew credit',V.backTo==='reports'?'Reports':'Home')+'<div class="stack">'+seg+
     '<div class="card"><div class="credit"><div class="lbl"><span>Crew member</span><span>Rig checks</span><span>Restocks</span><span>Items</span></div>'+(names.length?names.map(n=>'<div><b>'+esc(n)+'</b><span class="mono">'+tally[n].checks+'</span><span class="mono">'+tally[n].rs+'</span><span class="mono muted">'+tally[n].items+'</span></div>').join(''):'<p class="muted">No checks or restocks in this time.</p>')+'</div></div>'+
     (K.length?'<div class="lbl">Recent checks</div><div class="card" style="padding:6px 12px">'+K.slice(0,30).map(k=>'<div class="logrow"><span class="when">'+new Date(k.ts).toLocaleDateString([], {month:'short',day:'numeric'})+' '+fmtT(k.ts)+'</span><span><b>'+esc(k.truckName||'')+'</b> · '+esc(crewText(k.crew)||'—')+'</span><span class="who">'+(k.credit?Object.entries(k.credit).map(([n,c])=>esc(n)+' '+c).join(' · '):'')+'</span></div>').join('')+'</div>':'')+'</div>';
 }
@@ -688,10 +756,10 @@ function truckView(){
   const tabs='<div class="tabs" role="group"><button data-act="tab" data-v="truck" aria-pressed="'+(V.tab==='truck')+'">Truck</button><button data-act="tab" data-v="needs" aria-pressed="'+(V.tab==='needs')+'">Needed'+(needs?'<span class="badge">'+needs+'</span>':'')+'</button><button data-act="tab" data-v="history" aria-pressed="'+(V.tab==='history')+'">History</button></div>';
   if(V.setup) return topbar(t.name,'Setup')+'<p class="hint" style="margin:0 0 12px">Tap a compartment to set it up, or add a new one. Its spot on the layout comes from where you say it is.</p>'+truckBody(t);
   const rx=rsOn(t.id);
-  if(rx) return topbar(t.name,'Trucks')+'<p class="hint" style="margin:0 0 12px">Find what you used: search for it, or open the compartment and bag. Tap <b>+ Restock</b> on each item.</p>'+truckBody(t)+rsBasket(rx);
+  if(rx) return topbar(t.name,'Home')+'<p class="hint" style="margin:0 0 12px">Find what you used: search for it, or open the compartment and bag. Tap <b>+ Restock</b> on each item.</p>'+truckBody(t)+rsBasket(rx);
   const body= V.tab==='needs'?needsView(t): V.tab==='history'?historyView(t): truckBody(t);
   const rscard='<div class="card rscard"><div><b>Used supplies on a call?</b><br><span class="muted" style="font-size:15px">Restock just what you used. No full check.</span></div><button class="btn" data-act="rsbegin">Restock after a call</button></div>';
-  return topbar(t.name,'Trucks')+rscard+checkCard(t.id)+tabs+body;
+  return topbar(t.name,'Home')+rscard+checkCard(t.id)+tabs+body;
 }
 function nodeThumb(n){ return n.photo?thumbOf(n.photo.file):''; }
 function truckBody(t){
@@ -862,7 +930,7 @@ function render(){
   const ae=document.activeElement, fid=ae&&ae.id; let ss=null,se=null; try{ ss=ae.selectionStart; se=ae.selectionEnd; }catch(e){}
   const keep={}; ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew','rsnew','rsrun','pname','prole','sicode','siname'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
   const od=[...document.querySelectorAll('details[id][open]')].map(d=>d.id);
-  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='access'?accessView(): V.screen==='rsreview'?rsReviewView(): homeView();
+  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='access'?accessView(): V.screen==='reports'?reportsView(): V.screen==='rsreview'?rsReviewView(): homeView();
   document.getElementById('app').innerHTML=html;
   Object.entries(keep).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
   od.forEach(id=>{ const d=document.getElementById(id); if(d) d.open=true; });
@@ -879,8 +947,18 @@ function deleteNode(id){ const n=node(id); if(!n) return; const all=[n].concat(d
 const A={
   truck:b=>{ go('truck',{tid:b.dataset.t,q:'',tab:'truck'}); return false; },
   manage:()=>{ go('trucks'); return false; },
+  pickunit:b=>{ V.unit=b.dataset.t; ls.set('rc3-unit',V.unit); },
+  hcheck:()=>{ const u=homeUnit(); if(!u) return false; go('truck',{tid:u.id,q:'',tab:'truck'}); return false; },
+  hrestock:()=>{ const u=homeUnit(); if(!u) return false; Object.assign(V,{tid:u.id,q:'',tab:'truck'}); if(RS()&&RS().tid===u.id){ go('truck'); return false; } return A.rsbegin(); },
+  hhistory:()=>{ const u=homeUnit(); if(!u) return false; go('truck',{tid:u.id,q:'',tab:'history'}); return false; },
+  hreports:()=>{ V.backTo=''; go('reports'); return false; },
+  hedit:()=>{ if(!isAdmin()){ toast('Unit edit is for supervisors.'); return false; } V.setup=true; V.setupBy=me(); touchSetup(); const u=homeUnit(); if(u) go('truck',{tid:u.id,q:'',tab:'truck'}); else go('home'); toast('Unit edit is open. Tap Exit setup when you are done.'); return false; },
+  repcrew:()=>{ V.backTo='reports'; go('crew'); return false; },
+  replog:()=>{ V.backTo='reports'; go('log'); loadLog(); return false; },
+  repneeds:b=>{ go('truck',{tid:b.dataset.t,q:'',tab:'needs'}); return false; },
+  rephist:b=>{ go('truck',{tid:b.dataset.t,q:'',tab:'history'}); return false; },
   setupgate:()=>{ if(!isAdmin()){ toast('Truck setup is for supervisors.'); return false; } V.setup=true; V.setupBy=me(); touchSetup(); go('home'); toast('Truck setup is open. Tap Exit setup when you are done.'); return false; },
-  accesspage:()=>{ V.newCode=null; go('access'); loadAccess(); return false; },
+  accesspage:()=>{ if(!isAdmin()){ toast('People is for supervisors.'); return false; } V.newCode=null; go('access'); loadAccess(); return false; },
   accadd:()=>{ const n=document.getElementById('pname').value.trim(); const role=document.getElementById('prole').value; if(!n){ toast('Type their name first.'); return false; }
     accessDo('addPerson',[n,role],null,'Gave '+n+' access ('+role+')').then(r=>{ if(r){ V.newCode={name:n,code:r.code}; document.getElementById('pname').value=''; render(); window.scrollTo(0,0); } }); return false; },
   acccode:b=>{ const pe=(V.access.people||[]).find(x=>x.id===b.dataset.v); accessDo('newCode',[b.dataset.v],null,'Made a new sign-in code for '+(pe?pe.name:'')).then(r=>{ if(r){ V.newCode={name:pe?(pe.name||'the owner'):'',code:r.code}; render(); window.scrollTo(0,0); } }); return false; },
@@ -940,7 +1018,7 @@ const A={
     else { const k=checksOf(x.tid)[0]; if(k){ const rc=clone(k); const kid=rc.id; delete rc.id; let ch=false; (rc.failed||[]).forEach(f=>{ const hit=items.find(it=>it.node===f.node); if(hit&&!f.restocked){ f.restocked=true; ch=true; rc.restocked=(rc.restocked||[]).concat([{node:f.node,name:f.name,path:f.path,qty:hit.qty,t:now,by,run:x.run||''}]); } }); if(ch) persist('checks/'+kid,rc); } }
     setRS(null); toast('Restock saved: '+items.reduce((a,b)=>a+b.qty,0)+' items'); go('truck',{tid:x.tid,tab:'history'}); return false; },
   setme:b=>{ setMe(b.dataset.v); toast('This phone is now '+b.dataset.v); },
-  back:()=>{ const s=V.screen; if(['pin','roster','log','trucks','gate','crew','access'].includes(s)){ go('home'); return false; } if(s==='rsstart'||s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
+  back:()=>{ const s=V.screen; if((s==='log'||s==='crew')&&V.backTo==='reports'){ V.backTo=''; go('reports'); return false; } if(['pin','roster','log','trucks','gate','crew','access','reports'].includes(s)){ V.backTo=''; go('home'); return false; } if(s==='rsstart'||s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
   open:b=>{ openNode(b.dataset.n); return false; },
   tab:b=>{ V.tab=b.dataset.v; V.finishArm=false; },
   clearq:()=>{ V.q=''; render(); const el=document.getElementById('q'); if(el) el.focus(); return false; },
@@ -1008,7 +1086,7 @@ const A={
   hideinstall:()=>{ ls.set('rc3-hideinstall',true); }
 };
 const ARMED=['del','discard','tdel','photodel','rscancel','accremove','accrevoke','signout'];
-const SETUP_ONLY=['accesspage','accadd','acccode','accrole','accremove','accrevoke','addcomp','savecomp','addchild','up','del','move','moveto','photo','photodel','spotsel','spotdel','spotnew','tmove','tdel','tadd','manage','pinpage','savepin','rosterpage','rosteradd','rosterdel'];
+const SETUP_ONLY=['addcomp','savecomp','addchild','up','del','move','moveto','photo','photodel','spotsel','spotdel','spotnew','tmove','tdel','tadd','manage','pinpage','savepin','rosterpage','rosteradd','rosterdel'];
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
   const act=b.dataset.act; if(!ARMED.includes(act)&&act!=='rosterdel') V.arm=null; touchSetup();
