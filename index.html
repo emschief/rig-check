@@ -236,6 +236,29 @@ details.hist ul{margin:0;padding-left:20px}
 .trow .ta{display:flex;gap:6px;flex-wrap:wrap}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;z-index:30;font-weight:700;max-width:calc(100% - 32px);text-align:center}
 .loading{text-align:center;padding:60px 10px;color:var(--muted)}
+.setupband{position:sticky;top:0;z-index:20;margin:0 calc(-1 * max(14px,env(safe-area-inset-left,0px)));padding:10px max(14px,env(safe-area-inset-left,0px));padding-top:calc(10px + env(safe-area-inset-top,0px));margin-top:calc(-1 * env(safe-area-inset-top,0px));
+  background:repeating-linear-gradient(135deg,#E8590C 0 16px,#D9480F 16px 32px);color:#fff;display:flex;align-items:center;gap:10px;font-weight:700}
+.setupband .t{flex:1;min-width:0;line-height:1.2}
+.setupband .t b{font-family:var(--f-display);font-size:22px;letter-spacing:.06em;display:block}
+.setupband .t small{font-weight:400;opacity:.95}
+.setupband button{min-height:44px;padding:0 16px;border-radius:10px;border:2px solid #fff;background:rgba(0,0,0,.18);color:#fff;font-weight:700}
+.setuphome .card{border-left:6px solid #E8590C}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:46px;padding:0 16px;border-radius:23px;border:2px solid var(--line);background:var(--panel);font-weight:700;font-size:16px;display:inline-flex;align-items:center;gap:8px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip.me{outline:3px solid var(--ok);outline-offset:1px}
+.chip .x{font-size:20px;line-height:1;opacity:.8}
+.footbtns{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:22px}
+.setuplink{color:var(--muted);border:1.5px dashed var(--line);background:transparent}
+.credit{display:grid;gap:6px}
+.credit div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line)}
+.credit b{font-size:18px}
+.logrow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:15px}
+.logrow .when{color:var(--muted);font-family:var(--f-mono);font-size:13px;white-space:nowrap}
+.logrow .who{grid-column:2;color:var(--muted);font-size:13px}
+.seg2{display:flex;gap:6px;flex-wrap:wrap}
+.seg2 button{min-height:42px;padding:0 14px;border-radius:21px;border:2px solid var(--line);background:var(--panel);font-weight:700}
+.seg2 button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .empty{text-align:center;padding:28px 16px;display:grid;gap:10px;justify-items:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -271,6 +294,7 @@ const Local={
   load(){ return ls.get(this.key,null)||{v:'1',docs:{},files:{}}; },
   save(d){ ls.set(this.key,d); },
   bump(d){ d.v=String(Date.now())+uid(); this.save(d); return {v:d.v}; },
+  listPrefix(prefix,limit){ const d=this.load(); const o={}; Object.keys(d.docs).filter(p=>p.startsWith(prefix)).sort().reverse().slice(0,limit||500).forEach(p=>o[p]=d.docs[p]); return o; },
   getAll(since,ex){ const d=this.load(); if(since&&since===d.v) return {same:true,v:d.v}; const docs={}; Object.keys(d.docs).forEach(p=>{ if(!(ex||[]).some(x=>p.startsWith(x))) docs[p]=d.docs[p]; }); return {same:false,v:d.v,docs}; },
   getMany(paths){ const d=this.load(); const o={}; paths.forEach(p=>{ if(p in d.docs) o[p]=d.docs[p]; }); return o; },
   batch(ops){ const d=this.load(); JSON.parse(ops).forEach(o=>{ if(o.op==='delete') delete d.docs[o.path]; else d.docs[o.path]=o.json; }); return this.bump(d); },
@@ -318,7 +342,7 @@ async function pull(){
   if(pulling) return; pulling=true;
   try{
     if(Object.keys(Q).length) await flush();
-    const r=await call('getAll',lastV,['thumbs/']);
+    const r=await call('getAll',lastV,['thumbs/','log/']);
     setOnline(true);
     if(!r.same){
       lastV=r.v; const nd={};
@@ -360,9 +384,9 @@ function stats(items,cur){ let pass=0,fail=0,crit=0; items.forEach(it=>{ const r
 const nodeStats=(n,cur)=>stats(n.kind==='item'?[n]:itemsUnder(n.id),cur);
 function needOf(it,cur){ if(it.type==='count'){ const have=cur&&cur.have&&cur.have[it.id]!=null?cur.have[it.id]:0; return Math.max(1,(+it.par||1)-have); } return 1; }
 function truckState(tid){
-  const cur=curOf(tid); if(cur){ const s=stats(truckItems(tid),cur); return {st:'prog',text:'Check in progress · '+(s.pass+s.fail)+' of '+s.total+(cur.crew?' · '+cur.crew:'')}; }
+  const cur=curOf(tid); if(cur){ const s=stats(truckItems(tid),cur); return {st:'prog',text:'Check in progress · '+(s.pass+s.fail)+' of '+s.total+(cur.crew?' · '+crewText(cur.crew):'')}; }
   const last=checksOf(tid)[0];
-  if(last&&dayKey(new Date(last.ts))===dayKey()){ const open=(last.failed||[]).filter(f=>!f.restocked).length; return {st:open?'short':'ok',text:'Checked today '+fmtT(last.ts)+(last.crew?' · '+last.crew:'')+(open?' · '+open+' needed':'')}; }
+  if(last&&dayKey(new Date(last.ts))===dayKey()){ const open=(last.failed||[]).filter(f=>!f.restocked).length; return {st:open?'short':'ok',text:'Checked today '+fmtT(last.ts)+(last.crew?' · '+crewText(last.crew):'')+(open?' · '+open+' needed':'')}; }
   return {st:'idle',text:last?'Not checked today · last '+fmtDT(last.ts):'Not checked yet'};
 }
 
@@ -474,14 +498,28 @@ function diagram(tid){
 }
 
 /* ---------- view state ---------- */
-const V={screen:'home',tid:null,nid:null,tab:'truck',q:'',edit:false,hl:null,arm:null,finishArm:false,spotSel:null,moveId:null,addKind:'Bag',photoKey:null};
+const V={screen:'home',tid:null,nid:null,tab:'truck',q:'',edit:false,hl:null,arm:null,finishArm:false,spotSel:null,moveId:null,addKind:'Bag',photoKey:null,setup:false,setupBy:'',pick:[],logTruck:'',logRows:null,creditDays:30,addCrew:false};
+const SS={ get(k){ try{ return JSON.parse(sessionStorage.getItem(k)||'null'); }catch(e){ return null; } }, set(k,v){ try{ sessionStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+(()=>{ const st=SS.get('rc3-setup'); if(st&&st.until>Date.now()){ V.setup=true; V.setupBy=st.by; } })();
+function touchSetup(){ if(V.setup) SS.set('rc3-setup',{by:V.setupBy,until:Date.now()+30*60000}); }
+setInterval(()=>{ const st=SS.get('rc3-setup'); if(V.setup&&(!st||st.until<Date.now())){ V.setup=false; toast('Setup mode closed after 30 minutes.'); go('home'); } },60000);
+const me=()=>ls.get('rc3-me','');
+const setMe=n=>ls.set('rc3-me',n);
+const roster=()=>((D['meta/crew']&&D['meta/crew'].names)||[]).slice().sort((a,b)=>a.localeCompare(b));
+function addToRoster(name){ name=String(name||'').trim(); if(!name) return ''; const L=(D['meta/crew']&&D['meta/crew'].names)||[]; const hit=L.find(x=>x.toLowerCase()===name.toLowerCase()); if(hit) return hit; persist('meta/crew',{names:L.concat([name])}); logChange('','Added crew member '+name,name); return name; }
+const crewArr=c=>Array.isArray(c)?c:(c?[c]:[]);
+const crewText=c=>crewArr(c).join(', ');
+function hashPin(pin){ let h=2166136261; const str='rigcheck|'+pin+'|'+pin.length; for(let k=0;k<3;k++) for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i)+k; h=Math.imul(h,16777619)>>>0; } return h.toString(36); }
+function fullPath(id){ const n=node(id); if(!n) return ''; const t=truck(n.truck); return [t?t.name:''].concat(ancestors(id).map(a=>a.code||a.name)).concat([n.code||n.name]).filter(Boolean).join(' › '); }
+function logChange(tid,text,by){ const t=tid?truck(tid):null; persist('log/'+Date.now().toString(36)+uid(),{t:Date.now(),by:by||V.setupBy||me()||'Unknown',truck:tid||'',tn:t?t.name:'',text}); }
 function go(screen,extra){ Object.assign(V,{screen,edit:false,arm:null,finishArm:false,spotSel:null},extra||{}); render(); window.scrollTo(0,0); }
 
 /* ---------- screens ---------- */
+function setupBand(){ return V.setup?'<div class="setupband" role="status"><span class="t"><b>TRUCK SETUP</b><small>Changes here change the truck for everyone · '+esc(V.setupBy)+'</small></span><button data-act="exitsetup">Exit setup</button></div>':''; }
 function topbar(title,backLabel,right,code,crumbs){
   const net='<span class="netnote'+(online?'':' off')+'">'+(online?(Object.keys(Q).length?'Saving…':''):'Offline · will sync')+'</span>';
-  if(!backLabel) return '<header class="bar">'+MARK+'<h1>'+esc(title)+'</h1>'+net+(right||'')+'</header>';
-  return '<header class="bar sub"><div class="barrow"><button class="back" data-act="back">'+ico('back')+'<span>'+esc(backLabel)+'</span></button>'+net+(right||'')+'</div>'+(crumbs||'')+'<h1>'+(code?'<span class="hcode">'+esc(code)+'</span>':'')+esc(title)+'</h1></header>';
+  if(!backLabel) return setupBand()+'<header class="bar">'+MARK+'<h1>'+esc(title)+'</h1>'+net+(right||'')+'</header>';
+  return setupBand()+'<header class="bar sub"><div class="barrow"><button class="back" data-act="back">'+ico('back')+'<span>'+esc(backLabel)+'</span></button>'+net+(right||'')+'</div>'+(crumbs||'')+'<h1>'+(code?'<span class="hcode">'+esc(code)+'</span>':'')+esc(title)+'</h1></header>';
 }
 let installEvt=null;
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -494,17 +532,70 @@ function installCard(){
 function homeView(){
   const cards=trucks().map(t=>{ const s=truckState(t.id); const ph=photosFor('truck:'+t.id)[0];
     return '<button class="tcard" data-act="truck" data-t="'+t.id+'"><div class="pic">'+(ph?'<img src="'+esc(legacyThumb(ph))+'" alt="">':truckArt(t.name))+'</div><div class="meta"><h2>'+esc(t.name)+'</h2><span class="status st-'+s.st+'"><i class="dot"></i>'+esc(s.text)+'</span></div></button>'; }).join('');
-  return topbar('Rig Check')+installCard()+'<p class="lbl" style="margin:4px 0 12px">Pick your truck</p><div class="trucks">'+cards+'</div><div style="display:flex;justify-content:center;margin-top:20px"><button class="btn" data-act="manage">Manage trucks</button></div>';
+  if(V.setup) return setupHome();
+  return topbar('Rig Check')+installCard()+'<p class="lbl" style="margin:4px 0 12px">Pick your truck</p><div class="trucks">'+cards+'</div><div class="footbtns"><button class="btn" data-act="crewpage">Crew credit</button><button class="btn setuplink" data-act="setupgate">Truck setup</button></div>';
 }
+function setupHome(){
+  const T=trucks();
+  const tcards=T.map(t=>{ const ph=photosFor('truck:'+t.id)[0]; const n=allNodes().filter(x=>x.truck===t.id); return '<button class="tcard" data-act="truck" data-t="'+t.id+'"><div class="pic">'+(ph?'<img src="'+esc(legacyThumb(ph))+'" alt="">':truckArt(t.name))+'</div><div class="meta"><h2>'+esc(t.name)+'</h2><span class="muted">'+n.filter(x=>!x.parent).length+' compartments · '+n.filter(x=>x.kind==='item').length+' items · tap to set up</span></div></button>'; }).join('');
+  return topbar('Truck setup')+'<div class="setuphome stack"><p class="lbl" style="margin:4px 0 0">Set up a truck</p><div class="trucks">'+tcards+'</div>'+
+    '<div class="row" style="justify-content:center"><button class="btn" data-act="manage">Add, rename or delete trucks</button><button class="btn" data-act="rosterpage">Crew list</button><button class="btn" data-act="logpage">Change log</button><button class="btn" data-act="pinpage">Setup PIN</button></div></div>';
+}
+function gateView(){
+  const has=!!(D['meta/setup']&&D['meta/setup'].pin); const R=roster();
+  return topbar('Truck setup','Trucks')+'<div class="nodebody"><div class="card stack"><p style="margin:0">Truck setup is where compartments, bags and items are added, moved or deleted. Crews doing a rig check don\'t need it.</p>'+
+    '<label class="field"><span class="lbl">Your name</span>'+(R.length?'<select id="gname" class="inp"><option value="">Choose…</option>'+R.map(n=>'<option '+(n===me()?'selected':'')+'>'+esc(n)+'</option>').join('')+'<option value="__new">Someone else…</option></select>':'')+'<input id="gnew" class="inp" placeholder="Your name" '+(R.length?'hidden':'')+' autocomplete="off"></label>'+
+    '<label class="field"><span class="lbl">'+(has?'Setup PIN':'Create a setup PIN (4 or more digits)')+'</span><input id="gpin" class="inp" type="password" inputmode="numeric" autocomplete="off"></label>'+
+    (has?'':'<label class="field"><span class="lbl">Type the PIN again</span><input id="gpin2" class="inp" type="password" inputmode="numeric" autocomplete="off"></label><p class="hint">Share this PIN only with people allowed to change the trucks.</p>')+
+    '<button class="btn primary wide" data-act="entersetup">Open truck setup</button></div></div>';
+}
+function pinView(){
+  return topbar('Setup PIN','Setup')+'<div class="nodebody"><div class="card stack"><label class="field"><span class="lbl">Current PIN</span><input id="p0" class="inp" type="password" inputmode="numeric"></label><label class="field"><span class="lbl">New PIN</span><input id="p1" class="inp" type="password" inputmode="numeric"></label><label class="field"><span class="lbl">New PIN again</span><input id="p2" class="inp" type="password" inputmode="numeric"></label><button class="btn primary wide" data-act="savepin">Change PIN</button></div></div>';
+}
+function rosterView(){
+  const R=roster();
+  return topbar('Crew list','Setup')+'<div class="nodebody"><div class="card stack"><p class="hint">These names show up when a crew starts a rig check. Crews can also add a new name when they start.</p><div class="chips">'+(R.length?R.map(n=>'<button class="chip" data-act="rosterdel" data-v="'+esc(n)+'">'+esc(n)+'<span class="x" aria-label="Remove">'+(V.arm==='r'+n?'Remove?':'×')+'</span></button>').join(''):'<span class="muted">No names yet.</span>')+'</div>'+
+    '<div class="row"><input id="rnew" class="sinp" placeholder="Name or initials, e.g. J. Miller" style="flex:1;min-width:180px"><button class="btn small primary" data-act="rosteradd">Add</button></div></div></div>';
+}
+function logView(){
+  const T=trucks(); const rows=V.logRows;
+  const filt='<div class="seg2" role="group"><button data-act="logfilter" data-v="" aria-pressed="'+(!V.logTruck)+'">All</button>'+T.map(t=>'<button data-act="logfilter" data-v="'+t.id+'" aria-pressed="'+(V.logTruck===t.id)+'">'+esc(t.name)+'</button>').join('')+'</div>';
+  let body;
+  if(rows==null) body='<div class="loading">Loading the change log…</div>';
+  else { const L=rows.filter(x=>!V.logTruck||x.truck===V.logTruck);
+    body=L.length?'<div class="card" style="padding:6px 12px">'+L.map(x=>'<div class="logrow"><span class="when">'+new Date(x.t).toLocaleDateString([], {month:'short',day:'numeric'})+' '+fmtT(x.t)+'</span><span>'+esc(x.text)+'</span><span class="who">'+esc(x.by)+(x.tn&&!V.logTruck?' · '+esc(x.tn):'')+'</span></div>').join('')+'</div>':'<div class="card empty"><b>No changes yet.</b><span class="muted">Every change made in truck setup is listed here.</span></div>'; }
+  return topbar('Change log',V.setup?'Setup':'Trucks')+'<div class="stack">'+filt+body+'</div>';
+}
+function crewPage(){
+  const days=V.creditDays; const since=days?Date.now()-days*864e5:0;
+  const K=list('checks/').filter(k=>k.ts>=since).sort((a,b)=>b.ts-a.ts);
+  const tally={};
+  K.forEach(k=>{ const cr=crewArr(k.crew); cr.forEach(n=>{ tally[n]=tally[n]||{checks:0,items:0}; tally[n].checks++; }); Object.entries(k.credit||{}).forEach(([n,c])=>{ tally[n]=tally[n]||{checks:0,items:0}; tally[n].items+=c; }); });
+  const names=Object.keys(tally).sort((a,b)=>tally[b].checks-tally[a].checks||a.localeCompare(b));
+  const seg='<div class="seg2" role="group">'+[[7,'7 days'],[30,'30 days'],[90,'90 days'],[0,'All time']].map(([d,l])=>'<button data-act="creditdays" data-v="'+d+'" aria-pressed="'+(days===d)+'">'+l+'</button>').join('')+'</div>';
+  return topbar('Crew credit','Trucks')+'<div class="stack">'+seg+
+    '<div class="card"><div class="credit"><div class="lbl"><span>Crew member</span><span>Rig checks</span><span>Items</span></div>'+(names.length?names.map(n=>'<div><b>'+esc(n)+'</b><span class="mono">'+tally[n].checks+'</span><span class="mono muted">'+tally[n].items+'</span></div>').join(''):'<p class="muted">No finished checks in this time.</p>')+'</div></div>'+
+    (K.length?'<div class="lbl">Recent checks</div><div class="card" style="padding:6px 12px">'+K.slice(0,30).map(k=>'<div class="logrow"><span class="when">'+new Date(k.ts).toLocaleDateString([], {month:'short',day:'numeric'})+' '+fmtT(k.ts)+'</span><span><b>'+esc(k.truckName||'')+'</b> · '+esc(crewText(k.crew)||'—')+'</span><span class="who">'+(k.credit?Object.entries(k.credit).map(([n,c])=>esc(n)+' '+c).join(' · '):'')+'</span></div>').join('')+'</div>':'')+'</div>';
+}
+async function loadLog(){ V.logRows=null; render(); try{ const r=await call('listPrefix','log/',500); const rows=Object.values(r||{}).map(j=>{ try{ return JSON.parse(j); }catch(e){ return null; } }).filter(Boolean);
+  Object.keys(Q).filter(p=>p.startsWith('log/')&&Q[p]).forEach(p=>rows.push(JSON.parse(Q[p]))); const seen=new Set(); V.logRows=rows.filter(x=>{ const k=x.t+x.text; if(seen.has(k)) return false; seen.add(k); return true; }).sort((a,b)=>b.t-a.t); }catch(e){ V.logRows=[]; toast('Can\'t load the change log without a signal.'); } render(); }
 function checkCard(tid){
   const cur=curOf(tid);
+  const R=roster();
+  const newIn='<div class="row"><input id="crewnew" class="sinp" placeholder="'+(R.length?'Someone not listed? Type their name':'Type a crew member\'s name')+'" autocomplete="off" style="flex:1;min-width:180px"><button class="btn small" data-act="crewadd">Add</button></div>';
   if(!cur){ const last=checksOf(tid)[0];
-    return '<div class="card checkcard"><div><h2 style="font-size:26px">Start rig check</h2><div class="muted">'+(last?'Last check '+fmtDT(last.ts)+(last.crew?' by '+esc(last.crew):''):'No checks on record yet.')+'</div></div>'+
-      '<div class="row"><label class="field"><span class="lbl">Crew initials</span><input id="crew" class="inp" placeholder="JM / KT" autocomplete="off"></label><label class="field" style="max-width:190px"><span class="lbl">Mileage</span><input id="miles" class="inp" inputmode="numeric" placeholder="Odometer"></label><button class="btn go" data-act="start" style="min-width:150px">Start check</button></div></div>'; }
+    return '<div class="card checkcard"><div><h2 style="font-size:26px">Start rig check</h2><div class="muted">'+(last?'Last check '+fmtDT(last.ts)+(last.crew?' by '+esc(crewText(last.crew)):''):'No checks on record yet.')+'</div></div>'+
+      '<div class="stack" style="gap:8px"><span class="lbl">Who is doing this check? Tap everyone</span><div class="chips">'+R.concat(V.pick.filter(n=>!R.includes(n))).map(n=>'<button class="chip" data-act="pickcrew" data-v="'+esc(n)+'" aria-pressed="'+V.pick.includes(n)+'">'+esc(n)+'</button>').join('')+'</div>'+newIn+'</div>'+
+      '<div class="row"><label class="field" style="max-width:190px"><span class="lbl">Mileage</span><input id="miles" class="inp" inputmode="numeric" placeholder="Odometer"></label><button class="btn go" data-act="start" style="min-width:150px">Start check</button></div></div>'; }
+  const crew=crewArr(cur.crew); const mine=me();
+  const credit={}; Object.values(cur.by||{}).forEach(n=>credit[n]=(credit[n]||0)+1);
+  const crewRow='<div class="stack" style="gap:8px"><span class="lbl">Crew on this check</span><div class="chips">'+crew.map(n=>'<button class="chip'+(n===mine?' me':'')+'" data-act="setme" data-v="'+esc(n)+'" title="Tap if this is you">'+esc(n)+(credit[n]?' <span class="muted" style="font-weight:400">'+credit[n]+'</span>':'')+'</button>').join('')+'<button class="chip" data-act="togglecrew" style="border-style:dashed;color:var(--accent)">+ Add crew member</button></div>'+
+    (V.addCrew?'<div class="card stack" style="padding:12px"><div class="chips">'+R.filter(n=>!crew.includes(n)).map(n=>'<button class="chip" data-act="joincrew" data-v="'+esc(n)+'">'+esc(n)+'</button>').join('')+'</div>'+newIn+'</div>':'')+
+    (!crew.includes(mine)?'<div class="banner">Who is using this phone? Tap your name above, or add yourself.</div>':'<span class="hint">This phone: <b>'+esc(mine)+'</b>. Items you mark are credited to you.</span>')+'</div>';
   const s=stats(truckItems(tid),cur); const pp=s.total?s.pass/s.total*100:0, fp=s.total?s.fail/s.total*100:0;
-  return '<div class="card checkcard"><div class="row between"><div><span class="lbl">Check in progress</span><div class="muted">Started '+fmtT(cur.started)+(cur.crew?' by '+esc(cur.crew):'')+(cur.miles?' · '+esc(cur.miles)+' mi':'')+'</div></div><div class="bignum mono">'+(s.pass+s.fail)+'<span class="muted" style="font-size:20px"> / '+s.total+'</span></div></div>'+
+  return '<div class="card checkcard"><div class="row between"><div><span class="lbl">Check in progress</span><div class="muted">Started '+fmtT(cur.started)+(cur.miles?' · '+esc(cur.miles)+' mi':'')+'</div></div><div class="bignum mono">'+(s.pass+s.fail)+'<span class="muted" style="font-size:20px"> / '+s.total+'</span></div></div>'+
     '<div class="progress" aria-label="'+s.pass+' passed, '+s.fail+' failed, '+s.left+' not checked"><i class="p" style="width:'+pp+'%"></i><i class="f" style="width:'+fp+'%"></i></div>'+
-    '<div class="muted" style="font-size:15px">'+s.pass+' passed · '+s.fail+' failed · '+s.left+' not checked</div>'+
+    '<div class="muted" style="font-size:15px">'+s.pass+' passed · '+s.fail+' failed · '+s.left+' not checked</div>'+crewRow+
     (V.finishArm?summaryHTML(tid):'')+
     '<div class="row between"><button class="btn small danger" data-act="discard">'+(V.arm==='discard'?'Tap again to discard':'Discard')+'</button><button class="btn primary" data-act="finish">'+(V.finishArm?'Save finished check':'Finish check')+'</button></div></div>';
 }
@@ -517,6 +608,7 @@ function truckView(){
   const t=truck(V.tid); if(!t) return homeView();
   const needs=needsList(t.id).filter(n=>!n.done).length;
   const tabs='<div class="tabs" role="group"><button data-act="tab" data-v="truck" aria-pressed="'+(V.tab==='truck')+'">Truck</button><button data-act="tab" data-v="needs" aria-pressed="'+(V.tab==='needs')+'">Needed'+(needs?'<span class="badge">'+needs+'</span>':'')+'</button><button data-act="tab" data-v="history" aria-pressed="'+(V.tab==='history')+'">History</button></div>';
+  if(V.setup) return topbar(t.name,'Setup')+'<p class="hint" style="margin:0 0 12px">Tap a compartment to set it up, or add a new one. Its spot on the layout comes from where you say it is.</p>'+truckBody(t);
   const body= V.tab==='needs'?needsView(t): V.tab==='history'?historyView(t): truckBody(t);
   return topbar(t.name,'Trucks')+checkCard(t.id)+tabs+body;
 }
@@ -536,7 +628,7 @@ function truckBody(t){
       const sub= s.fail?'<small class="alert">'+s.fail+' failed</small>': cur?'<small>'+(s.pass+s.fail)+' of '+s.total+' checked</small>':'<small>'+s.total+' item'+(s.total===1?'':'s')+'</small>';
       return '<button class="ccard st-'+s.st+'" data-act="open" data-n="'+esc(c.id)+'"><span class="ph">'+(th?'<img src="'+esc(th)+'" alt=""><span class="cbadge">'+esc(c.code||'')+'</span>':'<span class="noimg">'+ico('door')+'<b>'+esc(c.code||'')+'</b></span>')+'</span><span class="cm"><b>'+esc(c.name)+'</b>'+sub+'</span></button>'; }).join('')+'</div>'; }).join('');
   return search+'<div class="tgrid"><div class="diag card">'+diagram(t.id)+'<div class="legend"><span class="st-ok"><i class="ldot"></i>Passed</span><span class="st-prog"><i class="ldot"></i>In progress</span><span class="st-short"><i class="ldot"></i>Failed</span><span class="st-crit"><i class="ldot"></i>Critical</span></div></div>'+
-    '<div style="min-width:0">'+(groups||'<div class="card muted">No compartments yet.</div>')+'<div class="grouph"><span></span></div><button class="addcard" data-act="addcomp" style="width:100%">+ Add compartment</button></div></div>';
+    '<div style="min-width:0">'+(groups||'<div class="card muted">No compartments yet.'+(V.setup?'':' A supervisor adds them in Truck setup.')+'</div>')+(V.setup?'<div class="grouph"><span></span></div><button class="addcard" data-act="addcomp" style="width:100%">+ Add compartment</button>':'')+'</div></div>';
 }
 function needsList(tid){
   const cur=curOf(tid);
@@ -558,15 +650,15 @@ function historyView(t){
   const K=checksOf(t.id);
   if(!K.length) return '<div class="card empty"><b>No finished checks yet.</b><span class="muted">Each finished check is kept here with what failed and what was restocked.</span></div>';
   return '<div class="list">'+K.map(k=>{ const open=(k.failed||[]).filter(f=>!f.restocked).length; const st=open?((k.failed||[]).some(f=>f.critical&&!f.restocked)?'crit':'short'):'ok'; const R=k.restocked||[];
-    return '<details class="hist st-'+st+'" id="h'+k.ts+'"><summary><span><b>'+fmtDT(k.ts)+'</b><br><small class="muted">'+esc(k.crew||'—')+(k.miles?' · '+esc(k.miles)+' mi':'')+' · '+k.pass+' passed · '+(k.failed||[]).length+' failed · '+k.notChecked+' not checked</small></span><span class="pill">'+(open?open+' still needed':R.length?R.length+' restocked':'All good')+'</span></summary><div class="body">'+
+    return '<details class="hist st-'+st+'" id="h'+k.ts+'"><summary><span><b>'+fmtDT(k.ts)+'</b><br><small class="muted">'+esc(crewText(k.crew)||'—')+(k.miles?' · '+esc(k.miles)+' mi':'')+' · '+k.pass+' passed · '+(k.failed||[]).length+' failed · '+k.notChecked+' not checked</small></span><span class="pill">'+(open?open+' still needed':R.length?R.length+' restocked':'All good')+'</span></summary><div class="body">'+
       ((k.failed||[]).length?'<div><span class="lbl">Failed</span><ul>'+k.failed.map(f=>'<li>'+esc(f.name)+' <span class="muted">('+esc(f.path)+')</span>'+(f.restocked?' ✓':'')+'</li>').join('')+'</ul></div>':'')+
-      '<div><span class="lbl">Restock log</span>'+(R.length?'<div class="loglist">'+R.map(r=>'<div><span class="mono muted">'+fmtT(r.t)+'</span><span>'+esc(r.name)+(r.qty>1?' × '+r.qty:'')+' <span class="muted">('+esc(r.path||'')+')</span></span><span class="muted">'+esc(r.by||'')+'</span></div>').join('')+'</div>':'<div class="muted">Nothing restocked.</div>')+'</div></div></details>'; }).join('')+'</div>';
+      (k.credit&&Object.keys(k.credit).length?'<div><span class="lbl">Who checked what</span><div>'+Object.entries(k.credit).map(([n,c])=>esc(n)+': '+c+' item'+(c===1?'':'s')).join(' · ')+'</div></div>':'')+'<div><span class="lbl">Restock log</span>'+(R.length?'<div class="loglist">'+R.map(r=>'<div><span class="mono muted">'+fmtT(r.t)+'</span><span>'+esc(r.name)+(r.qty>1?' × '+r.qty:'')+' <span class="muted">('+esc(r.path||'')+')</span></span><span class="muted">'+esc(r.by||'')+'</span></div>').join('')+'</div>':'<div class="muted">Nothing restocked.</div>')+'</div></div></details>'; }).join('')+'</div>';
 }
 function crumbsFor(n){ const t=truck(n.truck); const A=ancestors(n.id); return '<div class="crumbs"><button data-act="truck" data-t="'+esc(n.truck)+'">'+esc(t?t.name:'Truck')+'</button>'+A.map(a=>'<span>›</span><button data-act="open" data-n="'+esc(a.id)+'">'+esc(a.code||a.name)+'</button>').join('')+'</div>'; }
 function photoPanel(n){
   const cur=curOf(n.truck); const kids=kidsOf(n.id);
-  if(!n.photo){ return '<div class="card nophoto">'+ico('cam')+'<div class="stack" style="gap:8px"><span>'+(n.kind==='comp'?'Add a photo of this compartment. Then you can draw boxes on it to open what\'s inside.':'Add a photo so everyone knows what this looks like.')+'</span><button class="btn small primary" data-act="photo" data-k="node:'+esc(n.id)+'" style="justify-self:start">'+ico('cam')+' Take or add photo</button></div></div>'; }
-  const editing=V.edit&&n.kind!=='item'; const ratio=(n.photo.w&&n.photo.h)?(n.photo.w+' / '+n.photo.h):'4 / 3';
+  if(!n.photo){ if(!V.setup) return ''; return '<div class="card nophoto">'+ico('cam')+'<div class="stack" style="gap:8px"><span>'+(n.kind==='comp'?'Add a photo of this compartment. Then you can draw boxes on it to open what\'s inside.':'Add a photo so everyone knows what this looks like.')+'</span><button class="btn small primary" data-act="photo" data-k="node:'+esc(n.id)+'" style="justify-self:start">'+ico('cam')+' Take or add photo</button></div></div>'; }
+  const editing=V.setup&&n.kind!=='item'; const ratio=(n.photo.w&&n.photo.h)?(n.photo.w+' / '+n.photo.h):'4 / 3';
   const spots=n.kind==='item'?'':(n.spots||[]).map(sp=>{ const k=sp.node?node(sp.node):null; const st=k?nodeStats(k,cur).st:'idle';
     const style='left:'+sp.x+'%;top:'+sp.y+'%;width:'+sp.w+'%;height:'+sp.h+'%'; const label=k?(k.code||k.name):'Pick what this is';
     const cls='spot st-'+st+(k?'':' unlinked')+(editing&&V.spotSel===sp.id?' sel':'');
@@ -579,7 +671,7 @@ function photoPanel(n){
       '<div class="lbl">Or add something new</div><div class="kindpick">'+KINDS.concat(['Item']).map(k=>'<button data-act="addkind" data-v="'+k+'" aria-pressed="'+(V.addKind===k)+'">'+k+'</button>').join('')+'</div><div class="row"><input id="spname" class="sinp" placeholder="Name, e.g. Airway bag" style="flex:1;min-width:180px"><button class="btn small primary" data-act="spotnew" data-s="'+esc(sp.id)+'">Add</button></div>'+
       '<div class="row between"><button class="btn small danger" data-act="spotdel" data-s="'+esc(sp.id)+'">Delete box</button><button class="btn small" data-act="spotsel" data-s="">Done with box</button></div></div>';
   } else if(n.kind!=='item'&&kids.length&&!(n.spots||[]).length&&!cur){ html+='<p class="hint" style="margin-top:8px">Tip: tap Edit, then drag on the photo to make tappable boxes.</p>'; }
-  if(V.edit) html+='<div class="phbar"><button class="btn small" data-act="photo" data-k="node:'+esc(n.id)+'">'+ico('cam')+' Replace photo</button><button class="btn small danger" data-act="photodel">'+(V.arm==='photodel'?'Tap again':'Remove photo')+'</button></div>';
+  if(V.setup) html+='<div class="phbar"><button class="btn small" data-act="photo" data-k="node:'+esc(n.id)+'">'+ico('cam')+' Replace photo</button><button class="btn small danger" data-act="photodel">'+(V.arm==='photodel'?'Tap again':'Remove photo')+'</button></div>';
   return html;
 }
 function itemRow(it,cur,editing){
@@ -602,7 +694,7 @@ function editRow(k){
 }
 function nodeView(){
   const n=node(V.nid); if(!n) return truckView();
-  const t=truck(n.truck); const cur=curOf(n.truck); const kids=kidsOf(n.id); const editing=V.edit;
+  const t=truck(n.truck); const cur=V.setup?null:curOf(n.truck); const kids=kidsOf(n.id); const editing=V.setup;
   const parent=n.parent?node(n.parent):null; const backLabel=parent?(parent.code||parent.name):(t?t.name:'Truck');
   const s=nodeStats(n,cur);
   let head='';
@@ -620,12 +712,12 @@ function nodeView(){
   const itemHTML=items.map(it=>itemRow(it,cur,editing)).join('');
   const add= editing&&n.kind!=='item'?'<div class="card stack"><b>Add inside '+esc(n.name)+'</b><div class="kindpick">'+KINDS.concat(['Item']).map(k=>'<button data-act="addkind" data-v="'+k+'" aria-pressed="'+(V.addKind===k)+'">'+k+'</button>').join('')+'</div>'+
     '<div class="row"><input id="newname" class="sinp" placeholder="'+(V.addKind==='Item'?'Item name, e.g. 4×4 gauze':V.addKind+' name, e.g. Airway '+V.addKind.toLowerCase())+'" style="flex:1;min-width:180px">'+(V.addKind==='Item'?'<input id="newpar" class="sinp" type="number" min="0" inputmode="numeric" value="1" style="width:80px" aria-label="Should have"><select id="newtype" class="sinp" style="width:auto"><option value="count">Count</option><option value="check">Pass / fail</option></select>':'')+'<button class="btn small primary" data-act="addchild">Add</button></div></div>':'';
-  const empty= !kids.length&&!editing? '<div class="card empty"><b>Nothing in here yet.</b><span class="muted">Tap Edit to add bags, boxes and items.</span></div>':'';
+  const empty= !kids.length&&!editing? '<div class="card empty"><b>Nothing in here yet.</b><span class="muted">A supervisor adds what goes here in Truck setup.</span></div>':'';
   let nav='';
   if(!editing&&n.kind==='comp'){ const C=topComps(n.truck); const i=C.findIndex(c=>c.id===n.id); const prev=C[i-1], next=C[i+1];
     nav='<div class="navfoot">'+(prev?'<button class="btn" data-act="open" data-n="'+esc(prev.id)+'">‹ '+esc(prev.code||prev.name)+'</button>':'<button class="btn" data-act="truck" data-t="'+esc(n.truck)+'">‹ Truck</button>')+(next?'<button class="btn primary next" data-act="open" data-n="'+esc(next.id)+'"><span>Next: '+esc((next.code?next.code+' ':'')+next.name)+'</span><span>›</span></button>':'<button class="btn primary" data-act="truck" data-t="'+esc(n.truck)+'">Back to truck</button>')+'</div>'; }
-  if(n.kind==='item') return topbar(n.name,backLabel,'<button class="btn small" data-act="edit">'+(editing?'Done':'Edit')+'</button>','',crumbsFor(n))+'<div class="nodebody">'+photoPanel(n)+'<div class="list">'+itemRow(n,cur,editing)+'</div></div>';
-  return topbar(n.name,backLabel,'<button class="btn small" data-act="edit">'+(editing?'Done':'Edit')+'</button>',n.code,crumbsFor(n))+
+  if(n.kind==='item') return topbar(n.name,backLabel,'','',crumbsFor(n))+'<div class="nodebody">'+photoPanel(n)+'<div class="list">'+itemRow(n,cur,editing)+'</div></div>';
+  return topbar(n.name,backLabel,'',n.code,crumbsFor(n))+
     '<div class="nodebody">'+head+photoPanel(n)+hint+passAll+(contHTML?'<div class="list">'+contHTML+'</div>':'')+(itemHTML?'<div class="list">'+itemHTML+'</div>':'')+empty+add+'</div>'+nav;
 }
 function addCompView(){
@@ -660,9 +752,9 @@ function manageView(){
 function render(){
   if(!loaded||drag) return;
   const ae=document.activeElement, fid=ae&&ae.id; let ss=null,se=null; try{ ss=ae.selectionStart; se=ae.selectionEnd; }catch(e){}
-  const keep={}; ['crew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
+  const keep={}; ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
   const od=[...document.querySelectorAll('details[id][open]')].map(d=>d.id);
-  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): homeView();
+  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): homeView();
   document.getElementById('app').innerHTML=html;
   Object.entries(keep).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
   od.forEach(id=>{ const d=document.getElementById(id); if(d) d.open=true; });
@@ -679,7 +771,32 @@ function deleteNode(id){ const n=node(id); if(!n) return; const all=[n].concat(d
 const A={
   truck:b=>{ go('truck',{tid:b.dataset.t,q:'',tab:'truck'}); return false; },
   manage:()=>{ go('trucks'); return false; },
-  back:()=>{ const s=V.screen; if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
+  setupgate:()=>{ go('gate'); return false; },
+  entersetup:()=>{ const sel=document.getElementById('gname'); let name=(sel&&sel.value&&sel.value!=='__new')?sel.value:document.getElementById('gnew').value.trim();
+    const pin=document.getElementById('gpin').value.trim(); if(!name){ toast('Enter your name.'); return false; } if(pin.length<4){ toast('The PIN needs at least 4 digits.'); return false; }
+    const cfg=D['meta/setup'];
+    if(!cfg||!cfg.pin){ if(pin!==document.getElementById('gpin2').value.trim()){ toast('The two PINs don\'t match.'); return false; } persist('meta/setup',{pin:hashPin(pin)}); }
+    else if(cfg.pin!==hashPin(pin)){ toast('That PIN is not right.'); document.getElementById('gpin').value=''; return false; }
+    name=addToRoster(name)||name; V.setup=true; V.setupBy=name; touchSetup(); if(!cfg||!cfg.pin) logChange('','Created the setup PIN',name); go('home'); toast('Truck setup is open. Tap Exit setup when you are done.'); return false; },
+  exitsetup:()=>{ V.setup=false; V.setupBy=''; SS.set('rc3-setup',null); go('home'); toast('Setup closed.'); return false; },
+  pinpage:()=>{ go('pin'); return false; },
+  savepin:()=>{ const cfg=D['meta/setup']||{}; const a=document.getElementById('p0').value.trim(), b=document.getElementById('p1').value.trim(), c=document.getElementById('p2').value.trim();
+    if(cfg.pin&&cfg.pin!==hashPin(a)){ toast('Current PIN is not right.'); return false; } if(b.length<4){ toast('The new PIN needs at least 4 digits.'); return false; } if(b!==c){ toast('The new PINs don\'t match.'); return false; }
+    persist('meta/setup',{pin:hashPin(b)}); logChange('','Changed the setup PIN'); toast('PIN changed'); go('home'); return false; },
+  rosterpage:()=>{ go('roster'); return false; },
+  rosteradd:()=>{ const el=document.getElementById('rnew'); const n=el.value.trim(); if(!n) return false; addToRoster(n); el.value=''; },
+  rosterdel:b=>{ const n=b.dataset.v; if(V.arm!=='r'+n){ V.arm='r'+n; return; } V.arm=null; const L=((D['meta/crew']&&D['meta/crew'].names)||[]).filter(x=>x!==n); persist('meta/crew',{names:L}); logChange('','Removed crew member '+n); },
+  logpage:()=>{ go('log'); loadLog(); return false; },
+  logfilter:b=>{ V.logTruck=b.dataset.v; },
+  crewpage:()=>{ go('crew'); return false; },
+  creditdays:b=>{ V.creditDays=+b.dataset.v; },
+  pickcrew:b=>{ const n=b.dataset.v; V.pick=V.pick.includes(n)?V.pick.filter(x=>x!==n):V.pick.concat([n]); },
+  crewadd:()=>{ const el=document.getElementById('crewnew'); const n=addToRoster(el.value); if(!n) return false; el.value='';
+    const cur=curOf(V.tid); if(cur){ const c=clone(cur); c.crew=crewArr(c.crew); if(!c.crew.includes(n)) c.crew.push(n); setCur(V.tid,c); if(!crewArr(cur.crew).includes(me())) setMe(n); V.addCrew=false; toast(n+' added to this check'); } else if(!V.pick.includes(n)) V.pick=V.pick.concat([n]); },
+  togglecrew:()=>{ V.addCrew=!V.addCrew; },
+  joincrew:b=>{ const n=b.dataset.v; const c=clone(curOf(V.tid)); c.crew=crewArr(c.crew); if(!c.crew.includes(n)) c.crew.push(n); setCur(V.tid,c); if(!crewArr(curOf(V.tid).crew).includes(me())||!me()) setMe(n); V.addCrew=false; toast(n+' added to this check'); },
+  setme:b=>{ setMe(b.dataset.v); toast('This phone is now '+b.dataset.v); },
+  back:()=>{ const s=V.screen; if(['pin','roster','log','trucks','gate','crew'].includes(s)){ go('home'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
   open:b=>{ openNode(b.dataset.n); return false; },
   tab:b=>{ V.tab=b.dataset.v; V.finishArm=false; },
   clearq:()=>{ V.q=''; render(); const el=document.getElementById('q'); if(el) el.focus(); return false; },
@@ -688,73 +805,79 @@ const A={
   savecomp:()=>{ const name=document.getElementById('cname').value.trim(); const code=document.getElementById('ccode').value.trim().toUpperCase().slice(0,5); const loc=document.getElementById('cloc').value;
     if(!name){ toast('Give the compartment a name.'); return false; }
     const id='n'+uid(); persist('nodes/'+id,{truck:V.tid,parent:'',kind:'comp',name,code,loc,order:Math.max(0,...topComps(V.tid).filter(c=>c.loc===loc).map(c=>c.order||0))+1});
-    Object.assign(V,{screen:'node',nid:id,edit:true}); render(); window.scrollTo(0,0); toast(name+' added. Add a photo and what\'s inside.'); return false; },
+    logChange(V.tid,'Added compartment '+(code?code+' · ':'')+name+' ('+LOC_NAME[loc]+')');
+    Object.assign(V,{screen:'node',nid:id}); render(); window.scrollTo(0,0); toast(name+' added. Add a photo and what\'s inside.'); return false; },
   addkind:b=>{ V.addKind=b.dataset.v; },
   addchild:()=>{ const name=document.getElementById('newname').value.trim(); if(!name){ toast('Type a name first.'); return false; } const p=node(V.nid);
     const id='n'+uid(); const base={truck:p.truck,parent:p.id,name,order:nextOrder(p.id,p.truck)};
     if(V.addKind==='Item'){ const type=document.getElementById('newtype').value; Object.assign(base,{kind:'item',type,par:type==='count'?Math.max(0,parseInt(document.getElementById('newpar').value)||0):0,critical:false}); }
     else Object.assign(base,{kind:'bag',label:V.addKind});
-    persist('nodes/'+id,base); document.getElementById('newname').value=''; toast(name+' added'); },
+    persist('nodes/'+id,base); logChange(p.truck,'Added '+(base.kind==='item'?'item':(base.label||'bag').toLowerCase())+' "'+name+'"'+(base.kind==='item'&&base.type==='count'?' (should have '+base.par+')':'')+' in '+fullPath(p.id)); document.getElementById('newname').value=''; toast(name+' added'); },
   up:b=>{ const n=node(b.dataset.n); const sib=kidsOf(n.parent).filter(k=>(k.kind==='item')===(n.kind==='item')); const i=sib.findIndex(x=>x.id===n.id); if(i<1) return; const t=sib[i-1]; sib[i-1]=sib[i]; sib[i]=t; sib.forEach((x,k)=>{ if(x.order!==k+1){ x.order=k+1; saveNode(x); } }); },
-  del:b=>{ const id=b.dataset.n; if(V.arm!=='d'+id){ V.arm='d'+id; return; } V.arm=null; const n=node(id); deleteNode(id); toast(n.name+' deleted'); if(id===V.nid){ if(n.parent) openNode(n.parent); else go('truck',{tid:n.truck}); return false; } },
+  del:b=>{ const id=b.dataset.n; if(V.arm!=='d'+id){ V.arm='d'+id; return; } V.arm=null; const n=node(id); const cnt=itemsUnder(id).length; logChange(n.truck,'Deleted '+(n.kind==='item'?'item':n.kind==='comp'?'compartment':(n.label||'bag').toLowerCase())+' "'+n.name+'" from '+(fullPath(n.parent)||(truck(n.truck)||{}).name||'')+(cnt?' with '+cnt+' items':'')); deleteNode(id); toast(n.name+' deleted'); if(id===V.nid){ if(n.parent) openNode(n.parent); else go('truck',{tid:n.truck}); return false; } },
   move:b=>{ V.moveId=b.dataset.n; V.moveFrom=V.screen; V.screen='move'; render(); window.scrollTo(0,0); return false; },
-  moveto:b=>{ const n=node(V.moveId); if(!n) return; const all=[n].concat(descendants(n.id)); const ops=[];
+  moveto:b=>{ const n=node(V.moveId); if(!n) return; const all=[n].concat(descendants(n.id)); const ops=[]; const fromPath=n.parent?fullPath(n.parent):((truck(n.truck)||{}).name||'');
     let newTruck=n.truck, newParent=n.parent;
     if(b.dataset.t){ newTruck=b.dataset.t; newParent=''; } else { const p=node(b.dataset.p); newTruck=p.truck; newParent=p.id; }
     if(n.parent){ const op=node(n.parent); if(op&&(op.spots||[]).some(s=>s.node===n.id)){ op.spots=op.spots.map(s=>s.node===n.id?Object.assign({},s,{node:''}):s); const o=clone(op); delete o.id; ops.push(['nodes/'+op.id,o]); } }
     all.forEach(x=>{ const o=clone(x); delete o.id; o.truck=newTruck; if(x.id===n.id){ o.parent=newParent; o.order=nextOrder(newParent,newTruck); } ops.push(['nodes/'+x.id,o]); });
-    persistMany(ops); const dest=newParent?node(newParent):truck(newTruck); toast(n.name+' moved to '+(dest?dest.name:'')); V.moveId=null;
+    persistMany(ops); const dest=newParent?node(newParent):truck(newTruck); logChange(newTruck,'Moved "'+n.name+'" from '+fromPath+' to '+(newParent?fullPath(newParent):(dest?dest.name:''))); toast(n.name+' moved to '+(dest?dest.name:'')); V.moveId=null;
     if(newParent) openNode(newParent); else go('truck',{tid:newTruck}); return false; },
-  start:()=>{ const crew=document.getElementById('crew').value.trim(); const miles=document.getElementById('miles').value.trim();
-    if(!crew){ toast('Enter crew initials to start.'); document.getElementById('crew').focus(); return false; }
-    setCur(V.tid,{started:Date.now(),crew,miles,res:{},have:{},restocked:[]}); toast('Check started. Open a compartment to begin.'); },
+  start:()=>{ const typed=document.getElementById('crewnew').value.trim(); if(typed){ const n=addToRoster(typed); if(n&&!V.pick.includes(n)) V.pick=V.pick.concat([n]); }
+    const crew=V.pick.slice(); const miles=document.getElementById('miles').value.trim();
+    if(!crew.length){ toast('Tap who is doing the check, or type a name.'); return false; }
+    if(!crew.includes(me())) setMe(crew[0]);
+    setCur(V.tid,{started:Date.now(),crew,miles,res:{},have:{},by:{},restocked:[]}); V.pick=[]; toast('Check started. Open a compartment to begin.'); },
   discard:()=>{ if(V.arm!=='discard'){ V.arm='discard'; return; } V.arm=null; setCur(V.tid,null); toast('Check discarded'); },
   finish:()=>{ if(!V.finishArm){ V.finishArm=true; return; }
     const tid=V.tid,t=truck(tid),cur=curOf(tid); const items=truckItems(tid); const s=stats(items,cur); const failed=failedList(tid,cur);
-    const rec={truck:tid,truckName:t.name,ts:Date.now(),started:cur.started,crew:cur.crew||'',miles:cur.miles||'',total:s.total,pass:s.pass,notChecked:s.left,failed,restocked:cur.restocked||[]};
+    const credit={}; Object.values(cur.by||{}).forEach(n=>credit[n]=(credit[n]||0)+1);
+    const rec={truck:tid,truckName:t.name,ts:Date.now(),started:cur.started,crew:crewArr(cur.crew),miles:cur.miles||'',total:s.total,pass:s.pass,notChecked:s.left,failed,restocked:cur.restocked||[],credit};
     persist('checks/'+tid+'_'+rec.ts,rec); setCur(tid,null); V.finishArm=false;
     if(failed.length){ V.tab='needs'; toast('Check saved. Here is what\'s needed.'); } else { toast('Check saved. '+t.name+' is ready.'); go('home'); return false; } },
-  res:b=>{ const n=node(b.dataset.n); const cur=clone(curOf(n.truck)); cur.res=cur.res||{}; cur.have=cur.have||{}; const v=b.dataset.v;
-    if(!v||cur.res[n.id]===v){ delete cur.res[n.id]; delete cur.have[n.id]; } else { cur.res[n.id]=v; if(v==='fail'&&n.type==='count'&&cur.have[n.id]==null) cur.have[n.id]=Math.max(0,(+n.par||0)-1); if(v==='pass') delete cur.have[n.id]; }
+  res:b=>{ const n=node(b.dataset.n); const cur=clone(curOf(n.truck)); cur.res=cur.res||{}; cur.have=cur.have||{}; cur.by=cur.by||{}; const v=b.dataset.v; const who=me()||crewArr(cur.crew)[0]||'';
+    if(!v||cur.res[n.id]===v){ delete cur.res[n.id]; delete cur.have[n.id]; delete cur.by[n.id]; } else { if(who) cur.by[n.id]=who; cur.res[n.id]=v; if(v==='fail'&&n.type==='count'&&cur.have[n.id]==null) cur.have[n.id]=Math.max(0,(+n.par||0)-1); if(v==='pass') delete cur.have[n.id]; }
     setCur(n.truck,cur); },
   have:b=>{ const n=node(b.dataset.n); const cur=clone(curOf(n.truck)); cur.have=cur.have||{}; cur.have[n.id]=Math.max(0,Math.min((+n.par||0),(cur.have[n.id]||0)+(+b.dataset.d))); setCur(n.truck,cur); },
-  passall:()=>{ const n=node(V.nid); const cur=clone(curOf(n.truck)); cur.res=cur.res||{}; itemsUnder(n.id).forEach(it=>{ if(!cur.res[it.id]) cur.res[it.id]='pass'; }); setCur(n.truck,cur); },
+  passall:()=>{ const n=node(V.nid); const cur=clone(curOf(n.truck)); cur.res=cur.res||{}; cur.by=cur.by||{}; const who=me()||crewArr(cur.crew)[0]||''; itemsUnder(n.id).forEach(it=>{ if(!cur.res[it.id]){ cur.res[it.id]='pass'; if(who) cur.by[it.id]=who; } }); setCur(n.truck,cur); },
   restock:b=>{ const n=node(b.dataset.n); const tid=V.tid;
     if(b.dataset.src==='cur'){ const cur=clone(curOf(tid)); const qty=n?needOf(n,cur):1; cur.res[b.dataset.n]='pass'; if(cur.have) delete cur.have[b.dataset.n];
-      cur.restocked=(cur.restocked||[]).concat([{node:b.dataset.n,name:n?n.name:'Item',path:pathText(b.dataset.n),qty,t:Date.now(),by:cur.crew||''}]); setCur(tid,cur); toast((n?n.name:'Item')+' restocked'); }
+      cur.restocked=(cur.restocked||[]).concat([{node:b.dataset.n,name:n?n.name:'Item',path:pathText(b.dataset.n),qty,t:Date.now(),by:me()||crewText(cur.crew)}]); setCur(tid,cur); toast((n?n.name:'Item')+' restocked'); }
     else { const k=checksOf(tid)[0]; if(!k) return; const rec=clone(k); const id=rec.id; delete rec.id; const f=rec.failed[+b.dataset.i]; f.restocked=true;
-      rec.restocked=(rec.restocked||[]).concat([{node:f.node,name:f.name,path:f.path,qty:f.need,t:Date.now(),by:rec.crew||''}]); persist('checks/'+id,rec); toast(f.name+' restocked'); } },
+      rec.restocked=(rec.restocked||[]).concat([{node:f.node,name:f.name,path:f.path,qty:f.need,t:Date.now(),by:me()||crewText(rec.crew)}]); persist('checks/'+id,rec); toast(f.name+' restocked'); } },
   copyneeds:()=>{ const t=truck(V.tid); const L=needsList(V.tid).filter(x=>!x.done); const txt=[t.name+' needed · '+new Date().toLocaleDateString()].concat(L.map(x=>'- '+x.name+(x.type==='count'?' × '+x.need:' (fix/replace)')+' ['+x.path+']')).join('\n');
     const box=document.getElementById('copybox'); const sel=()=>{ box.hidden=false; box.value=txt; box.select(); toast('Select and copy the list below'); };
     try{ navigator.clipboard.writeText(txt).then(()=>toast('List copied'),sel); }catch(e){ sel(); } return false; },
   photo:b=>{ V.photoKey=b.dataset.k; document.getElementById('photoin').click(); return false; },
-  photodel:()=>{ if(V.arm!=='photodel'){ V.arm='photodel'; return; } V.arm=null; const n=node(V.nid); if(n.photo) dropPhoto(n.photo.file); delete n.photo; n.spots=[]; saveNode(n); },
+  photodel:()=>{ if(V.arm!=='photodel'){ V.arm='photodel'; return; } V.arm=null; const n=node(V.nid); if(n.photo) dropPhoto(n.photo.file); delete n.photo; n.spots=[]; saveNode(n); logChange(n.truck,'Removed the photo of '+fullPath(n.id)); },
   spotsel:b=>{ V.spotSel=b.dataset.s||null; },
-  spotdel:b=>{ const n=node(V.nid); n.spots=(n.spots||[]).filter(x=>x.id!==b.dataset.s); saveNode(n); V.spotSel=null; },
+  spotdel:b=>{ const n=node(V.nid); n.spots=(n.spots||[]).filter(x=>x.id!==b.dataset.s); saveNode(n); logChange(n.truck,'Deleted a box on the photo of '+fullPath(n.id)); V.spotSel=null; },
   spotnew:b=>{ const name=document.getElementById('spname').value.trim(); if(!name){ toast('Type a name first.'); return false; } const p=node(V.nid); const id='n'+uid();
     const base={truck:p.truck,parent:p.id,name,order:nextOrder(p.id,p.truck)}; if(V.addKind==='Item') Object.assign(base,{kind:'item',type:'count',par:1,critical:false}); else Object.assign(base,{kind:'bag',label:V.addKind});
-    persist('nodes/'+id,base); p.spots=(p.spots||[]).map(s=>s.id===b.dataset.s?Object.assign({},s,{node:id}):s); saveNode(p); V.spotSel=null; toast(name+' added'); },
+    persist('nodes/'+id,base); p.spots=(p.spots||[]).map(s=>s.id===b.dataset.s?Object.assign({},s,{node:id}):s); saveNode(p); logChange(p.truck,'Added '+(base.kind==='item'?'item':(base.label||'bag').toLowerCase())+' "'+name+'" in '+fullPath(p.id)+' and boxed it on the photo'); V.spotSel=null; toast(name+' added'); },
   tmove:b=>{ const T=trucks(); const i=T.findIndex(t=>t.id===b.dataset.t), j=i+(+b.dataset.d); if(j<0||j>=T.length) return; const x=T[i]; T[i]=T[j]; T[j]=x; T.forEach((t,k)=>{ if(t.order!==k+1){ const o=clone(t); delete o.id; o.order=k+1; persist('trucks/'+t.id,o); } }); },
-  tdel:b=>{ const tid=b.dataset.t; if(V.arm!=='t'+tid){ V.arm='t'+tid; return; } V.arm=null; const ops=[['trucks/'+tid,null],['current/'+tid,null]]; allNodes().filter(n=>n.truck===tid).forEach(n=>{ if(n.photo) dropPhoto(n.photo.file); ops.push(['nodes/'+n.id,null]); }); persistMany(ops); toast('Truck deleted'); },
+  tdel:b=>{ const tid=b.dataset.t; if(V.arm!=='t'+tid){ V.arm='t'+tid; return; } V.arm=null; logChange('','Deleted truck '+((truck(tid)||{}).name||'')); const ops=[['trucks/'+tid,null],['current/'+tid,null]]; allNodes().filter(n=>n.truck===tid).forEach(n=>{ if(n.photo) dropPhoto(n.photo.file); ops.push(['nodes/'+n.id,null]); }); persistMany(ops); toast('Truck deleted'); },
   tadd:()=>{ const name=document.getElementById('tnew').value.trim(); if(!name){ toast('Type a name for the truck.'); return false; } const tid='t'+uid(); const ops=[['trucks/'+tid,{name,order:trucks().length+1}]];
     ['hood','cab'].forEach(loc=>{ const id=tid+'_'+loc; ops.push(['nodes/'+id,{truck:tid,parent:'',kind:'comp',name:loc==='hood'?'Vehicle walk-around':'Cab',code:loc==='hood'?'VEH':'CAB',loc,order:1}]); (DEFAULTS[loc==='hood'?'veh':'cab']||[]).forEach((it,i)=>ops.push(['nodes/'+id+'_i'+i,Object.assign({truck:tid,parent:id,kind:'item',order:i+1},it)])); });
-    persistMany(ops); document.getElementById('tnew').value=''; toast(name+' added'); },
+    persistMany(ops); logChange(tid,'Added truck '+name); document.getElementById('tnew').value=''; toast(name+' added'); },
   install:()=>{ if(installEvt){ installEvt.prompt(); installEvt=null; } },
   hideinstall:()=>{ ls.set('rc3-hideinstall',true); }
 };
 const ARMED=['del','discard','tdel','photodel'];
+const SETUP_ONLY=['addcomp','savecomp','addchild','up','del','move','moveto','photo','photodel','spotsel','spotdel','spotnew','tmove','tdel','tadd','manage','pinpage','savepin','rosterpage','rosteradd','rosterdel'];
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
-  const act=b.dataset.act; if(!ARMED.includes(act)) V.arm=null; if(act!=='finish'&&act!=='discard') V.finishArm=false;
+  const act=b.dataset.act; if(!ARMED.includes(act)&&act!=='rosterdel') V.arm=null; touchSetup();
+  if(!V.setup&&SETUP_ONLY.includes(act)){ toast('That is part of Truck setup.'); return; } if(act!=='finish'&&act!=='discard') V.finishArm=false;
   const r=A[act]&&A[act](b,e); if(r!==false) render();
 });
-document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='crew'){ A.start(); render(); } if(e.key==='Enter'&&e.target.id==='q') e.target.blur(); if(e.key==='Enter'&&e.target.id==='newname'){ A.addchild(); render(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='crewnew'){ A.crewadd(); render(); } if(e.key==='Enter'&&e.target.id==='gpin'&&!document.getElementById('gpin2')){ if(A.entersetup()!==false) render(); } if(e.key==='Enter'&&e.target.id==='q') e.target.blur(); if(e.key==='Enter'&&e.target.id==='newname'){ A.addchild(); render(); } });
 document.addEventListener('input',e=>{ if(e.target.dataset.inp==='q'){ V.q=e.target.value; render(); } });
-document.addEventListener('change',e=>{
-  const t=e.target,k=t.dataset.chg; if(!k) return;
-  if(k==='tname'){ const tr=truck(t.dataset.t); if(tr){ const o=clone(tr); delete o.id; o.name=t.value.trim()||tr.name; persist('trucks/'+tr.id,o); } render(); return; }
-  if(k==='spotnode'){ const n=node(V.nid); n.spots=(n.spots||[]).map(s=>s.id===t.dataset.s?Object.assign({},s,{node:t.value}):s); saveNode(n); if(t.value) V.spotSel=null; render(); return; }
-  const n=node(t.dataset.n); if(!n) return;
+document.addEventListener('change',e=>{ if(e.target.id==='gname'){ const nw=document.getElementById('gnew'); if(nw) nw.hidden=e.target.value!=='__new'; return; }
+  const t=e.target,k=t.dataset.chg; if(!k) return; if(!V.setup){ render(); return; } touchSetup();
+  if(k==='tname'){ const tr=truck(t.dataset.t); if(tr){ const o=clone(tr); delete o.id; o.name=t.value.trim()||tr.name; if(o.name!==tr.name){ persist('trucks/'+tr.id,o); logChange(tr.id,'Renamed truck '+tr.name+' to '+o.name); } } render(); return; }
+  if(k==='spotnode'){ const n=node(V.nid); n.spots=(n.spots||[]).map(s=>s.id===t.dataset.s?Object.assign({},s,{node:t.value}):s); saveNode(n); if(t.value){ const kk=node(t.value); logChange(n.truck,'Linked a box on the photo of '+fullPath(n.id)+' to "'+(kk?kk.name:'')+'"'); V.spotSel=null; } render(); return; }
+  const n=node(t.dataset.n); if(!n) return; const before=clone(n); const where=fullPath(n.id);
   if(k==='name') n.name=t.value.trim()||n.name;
   if(k==='code') n.code=t.value.trim().toUpperCase().slice(0,5);
   if(k==='loc'){ n.loc=t.value; n.order=Math.max(0,...topComps(n.truck).filter(c=>c.loc===t.value&&c.id!==n.id).map(c=>c.order||0))+1; }
@@ -762,16 +885,20 @@ document.addEventListener('change',e=>{
   if(k==='type'){ n.type=t.value; if(n.type==='check') n.par=0; else if(!n.par) n.par=1; }
   if(k==='par') n.par=Math.max(0,parseInt(t.value)||0);
   if(k==='crit') n.critical=t.checked;
-  saveNode(n); render();
+  const msg={name:()=>'Renamed "'+before.name+'" to "'+n.name+'"'+(n.parent?' in '+fullPath(n.parent):' on '+((truck(n.truck)||{}).name||'')),code:()=>'Changed code of '+n.name+' from '+(before.code||'none')+' to '+(n.code||'none'),loc:()=>'Moved compartment '+n.name+' from '+LOC_NAME[before.loc]+' to '+LOC_NAME[n.loc],
+    label:()=>'Changed '+where+' type from '+(before.label||'Bag')+' to '+n.label,type:()=>'Changed '+where+' to '+(n.type==='count'?'a counted item':'a pass/fail check'),par:()=>'Changed how many '+where+' should have from '+(+before.par||0)+' to '+n.par,crit:()=>(n.critical?'Marked ':'Unmarked ')+where+' as critical'}[k];
+  const changed=k==='crit'?before.critical!==n.critical:k==='par'?(+before.par||0)!==n.par:before[k]!==n[k];
+  saveNode(n); if(changed&&msg) logChange(n.truck,msg()); render();
 });
 document.getElementById('photoin').addEventListener('change',async e=>{
   const f=e.target.files&&e.target.files[0]; e.target.value=''; const key=V.photoKey; if(!f||!key) return;
   toast('Saving photo…');
   try{
     if(key.startsWith('truck:')){ const im=await loadImg(f); let thumb=shrink(im,480).toDataURL('image/jpeg',.7); if(thumb.length>40000) thumb=shrink(im,360).toDataURL('image/jpeg',.6);
-      photosFor(key).forEach(p=>{ persist('photos/'+p.id,null); if(p.file) call('deletePhoto',p.file).catch(()=>{}); }); persist('photos/p'+uid(),{comp:key,thumb,t:Date.now()}); render(); toast('Photo saved'); return; }
-    const n=node(key.slice(5)); if(!n) return; const ph=await savePhoto(f); const fresh=node(n.id); if(fresh.photo) dropPhoto(fresh.photo.file); fresh.photo=ph; if(!fresh.spots) fresh.spots=[]; saveNode(fresh);
-    if(fresh.kind!=='item'&&V.nid===fresh.id){ V.edit=true; toast('Photo saved. Drag on it to draw boxes.'); } else toast('Photo saved'); render();
+      photosFor(key).forEach(p=>{ persist('photos/'+p.id,null); if(p.file) call('deletePhoto',p.file).catch(()=>{}); }); persist('photos/p'+uid(),{comp:key,thumb,t:Date.now()}); logChange(key.slice(6),'New truck photo'); render(); toast('Photo saved'); return; }
+    const n=node(key.slice(5)); if(!n) return; const ph=await savePhoto(f); const fresh=node(n.id); const had=!!fresh.photo; if(fresh.photo) dropPhoto(fresh.photo.file); fresh.photo=ph; if(!fresh.spots) fresh.spots=[]; saveNode(fresh);
+    logChange(fresh.truck,(had?'Replaced':'Added')+' the photo of '+fullPath(fresh.id));
+    if(fresh.kind!=='item'&&V.nid===fresh.id) toast('Photo saved. Drag on it to draw boxes.'); else toast('Photo saved'); render();
   }catch(err){ toast(online?'Photo didn\'t save. Try again.':'You need a signal to save photos.'); }
 });
 
