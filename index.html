@@ -290,6 +290,7 @@ details.hist.rs{border-left-color:#0B7A6E}
 .trucks.pick .tcard h2{font-size:24px}
 .trucks.pick .status{font-size:14px}
 @media (min-width:700px){.trucks.pick{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}}
+.checkcard{margin-bottom:16px}
 .hometiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px}
 @media (min-width:700px){.hometiles{grid-template-columns:repeat(3,1fr)}}
 .htile{display:grid;grid-template-columns:1fr;row-gap:4px;align-content:start;justify-items:start;text-align:left;min-height:96px;padding:14px;border-radius:16px;background:var(--panel);border:2px solid var(--line);color:var(--ink)}
@@ -752,14 +753,19 @@ function summaryHTML(tid){
 }
 function truckView(){
   const t=truck(V.tid); if(!t) return homeView();
-  const needs=needsList(t.id).filter(n=>!n.done).length;
-  const tabs='<div class="tabs" role="group"><button data-act="tab" data-v="truck" aria-pressed="'+(V.tab==='truck')+'">Truck</button><button data-act="tab" data-v="needs" aria-pressed="'+(V.tab==='needs')+'">Needed'+(needs?'<span class="badge">'+needs+'</span>':'')+'</button><button data-act="tab" data-v="history" aria-pressed="'+(V.tab==='history')+'">History</button></div>';
   if(V.setup) return topbar(t.name,'Setup')+'<p class="hint" style="margin:0 0 12px">Tap a compartment to set it up, or add a new one. Its spot on the layout comes from where you say it is.</p>'+truckBody(t);
   const rx=rsOn(t.id);
   if(rx) return topbar(t.name,'Home')+'<p class="hint" style="margin:0 0 12px">Find what you used: search for it, or open the compartment and bag. Tap <b>+ Restock</b> on each item.</p>'+truckBody(t)+rsBasket(rx);
-  const body= V.tab==='needs'?needsView(t): V.tab==='history'?historyView(t): truckBody(t);
-  const rscard='<div class="card rscard"><div><b>Used supplies on a call?</b><br><span class="muted" style="font-size:15px">Restock just what you used. No full check.</span></div><button class="btn" data-act="rsbegin">Restock after a call</button></div>';
-  return topbar(t.name,'Home')+rscard+checkCard(t.id)+tabs+body;
+  return topbar('Rig check · '+t.name,'Home')+checkCard(t.id)+truckBody(t);
+}
+function restockHub(){
+  const t=truck(V.tid); if(!t) return homeView();
+  const rscard='<div class="card rscard"><div><b>Used supplies on a call?</b><br><span class="muted" style="font-size:15px">Pick just what you used. No full check.</span></div><button class="btn go" data-act="rsbegin">Restock after a call</button></div>';
+  return topbar('Restock · '+t.name,V.backTo==='reports'?'Reports':'Home')+rscard+'<div style="margin-top:18px">'+needsView(t)+'</div>';
+}
+function historyPage(){
+  const t=truck(V.tid); if(!t) return homeView();
+  return topbar('History · '+t.name,V.backTo==='reports'?'Reports':'Home')+historyView(t);
 }
 function nodeThumb(n){ return n.photo?thumbOf(n.photo.file):''; }
 function truckBody(t){
@@ -930,7 +936,7 @@ function render(){
   const ae=document.activeElement, fid=ae&&ae.id; let ss=null,se=null; try{ ss=ae.selectionStart; se=ae.selectionEnd; }catch(e){}
   const keep={}; ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew','rsnew','rsrun','pname','prole','sicode','siname'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
   const od=[...document.querySelectorAll('details[id][open]')].map(d=>d.id);
-  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='access'?accessView(): V.screen==='reports'?reportsView(): V.screen==='rsreview'?rsReviewView(): homeView();
+  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='access'?accessView(): V.screen==='reports'?reportsView(): V.screen==='restock'?restockHub(): V.screen==='history'?historyPage(): V.screen==='rsreview'?rsReviewView(): homeView();
   document.getElementById('app').innerHTML=html;
   Object.entries(keep).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
   od.forEach(id=>{ const d=document.getElementById(id); if(d) d.open=true; });
@@ -949,14 +955,14 @@ const A={
   manage:()=>{ go('trucks'); return false; },
   pickunit:b=>{ V.unit=b.dataset.t; ls.set('rc3-unit',V.unit); },
   hcheck:()=>{ const u=homeUnit(); if(!u) return false; go('truck',{tid:u.id,q:'',tab:'truck'}); return false; },
-  hrestock:()=>{ const u=homeUnit(); if(!u) return false; Object.assign(V,{tid:u.id,q:'',tab:'truck'}); if(RS()&&RS().tid===u.id){ go('truck'); return false; } return A.rsbegin(); },
-  hhistory:()=>{ const u=homeUnit(); if(!u) return false; go('truck',{tid:u.id,q:'',tab:'history'}); return false; },
+  hrestock:()=>{ const u=homeUnit(); if(!u) return false; V.backTo=''; if(RS()&&RS().tid===u.id){ go('truck',{tid:u.id,q:''}); return false; } go('restock',{tid:u.id,q:''}); return false; },
+  hhistory:()=>{ const u=homeUnit(); if(!u) return false; V.backTo=''; go('history',{tid:u.id}); return false; },
   hreports:()=>{ V.backTo=''; go('reports'); return false; },
   hedit:()=>{ if(!isAdmin()){ toast('Unit edit is for supervisors.'); return false; } V.setup=true; V.setupBy=me(); touchSetup(); const u=homeUnit(); if(u) go('truck',{tid:u.id,q:'',tab:'truck'}); else go('home'); toast('Unit edit is open. Tap Exit setup when you are done.'); return false; },
   repcrew:()=>{ V.backTo='reports'; go('crew'); return false; },
   replog:()=>{ V.backTo='reports'; go('log'); loadLog(); return false; },
-  repneeds:b=>{ go('truck',{tid:b.dataset.t,q:'',tab:'needs'}); return false; },
-  rephist:b=>{ go('truck',{tid:b.dataset.t,q:'',tab:'history'}); return false; },
+  repneeds:b=>{ V.backTo='reports'; go('restock',{tid:b.dataset.t,q:''}); return false; },
+  rephist:b=>{ V.backTo='reports'; go('history',{tid:b.dataset.t}); return false; },
   setupgate:()=>{ if(!isAdmin()){ toast('Truck setup is for supervisors.'); return false; } V.setup=true; V.setupBy=me(); touchSetup(); go('home'); toast('Truck setup is open. Tap Exit setup when you are done.'); return false; },
   accesspage:()=>{ if(!isAdmin()){ toast('People is for supervisors.'); return false; } V.newCode=null; go('access'); loadAccess(); return false; },
   accadd:()=>{ const n=document.getElementById('pname').value.trim(); const role=document.getElementById('prole').value; if(!n){ toast('Type their name first.'); return false; }
@@ -1018,7 +1024,7 @@ const A={
     else { const k=checksOf(x.tid)[0]; if(k){ const rc=clone(k); const kid=rc.id; delete rc.id; let ch=false; (rc.failed||[]).forEach(f=>{ const hit=items.find(it=>it.node===f.node); if(hit&&!f.restocked){ f.restocked=true; ch=true; rc.restocked=(rc.restocked||[]).concat([{node:f.node,name:f.name,path:f.path,qty:hit.qty,t:now,by,run:x.run||''}]); } }); if(ch) persist('checks/'+kid,rc); } }
     setRS(null); toast('Restock saved: '+items.reduce((a,b)=>a+b.qty,0)+' items'); go('truck',{tid:x.tid,tab:'history'}); return false; },
   setme:b=>{ setMe(b.dataset.v); toast('This phone is now '+b.dataset.v); },
-  back:()=>{ const s=V.screen; if((s==='log'||s==='crew')&&V.backTo==='reports'){ V.backTo=''; go('reports'); return false; } if(['pin','roster','log','trucks','gate','crew','access','reports'].includes(s)){ V.backTo=''; go('home'); return false; } if(s==='rsstart'||s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
+  back:()=>{ const s=V.screen; if(['log','crew','restock','history'].includes(s)&&V.backTo==='reports'){ V.backTo=''; go('reports'); return false; } if(['pin','roster','log','trucks','gate','crew','access','reports','restock','history'].includes(s)){ V.backTo=''; go('home'); return false; } if(s==='rsstart'){ go('restock'); return false; } if(s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
   open:b=>{ openNode(b.dataset.n); return false; },
   tab:b=>{ V.tab=b.dataset.v; V.finishArm=false; },
   clearq:()=>{ V.q=''; render(); const el=document.getElementById('q'); if(el) el.focus(); return false; },
@@ -1056,7 +1062,7 @@ const A={
     const credit={}; Object.values(cur.by||{}).forEach(n=>credit[n]=(credit[n]||0)+1);
     const rec={truck:tid,truckName:t.name,ts:Date.now(),started:cur.started,crew:crewArr(cur.crew),miles:cur.miles||'',total:s.total,pass:s.pass,notChecked:s.left,failed,restocked:cur.restocked||[],credit};
     persist('checks/'+tid+'_'+rec.ts,rec); setCur(tid,null); V.finishArm=false;
-    if(failed.length){ V.tab='needs'; toast('Check saved. Here is what\'s needed.'); } else { toast('Check saved. '+t.name+' is ready.'); go('home'); return false; } },
+    if(failed.length){ go('restock',{tid}); toast('Check saved. Here is what\'s needed.'); } else { toast('Check saved. '+t.name+' is ready.'); go('home'); return false; } },
   res:b=>{ const n=node(b.dataset.n); const cur=clone(curOf(n.truck)); cur.res=cur.res||{}; cur.have=cur.have||{}; cur.by=cur.by||{}; const v=b.dataset.v; const who=me()||crewArr(cur.crew)[0]||'';
     if(!v||cur.res[n.id]===v){ delete cur.res[n.id]; delete cur.have[n.id]; delete cur.by[n.id]; } else { if(who) cur.by[n.id]=who; cur.res[n.id]=v; if(v==='fail'&&n.type==='count'&&cur.have[n.id]==null) cur.have[n.id]=Math.max(0,(+n.par||0)-1); if(v==='pass') delete cur.have[n.id]; }
     setCur(n.truck,cur); },
