@@ -243,6 +243,25 @@ details.hist ul{margin:0;padding-left:20px}
 .setupband .t small{font-weight:400;opacity:.95}
 .setupband button{min-height:44px;padding:0 16px;border-radius:10px;border:2px solid #fff;background:rgba(0,0,0,.18);color:#fff;font-weight:700}
 .setuphome .card{border-left:6px solid #E8590C}
+.rsband{position:sticky;top:0;z-index:20;margin:0 calc(-1 * max(14px,env(safe-area-inset-left,0px)));padding:10px max(14px,env(safe-area-inset-left,0px));padding-top:calc(10px + env(safe-area-inset-top,0px));margin-top:calc(-1 * env(safe-area-inset-top,0px));
+  background:repeating-linear-gradient(135deg,#0B7A6E 0 16px,#096B60 16px 32px);color:#fff;display:flex;align-items:center;gap:10px;font-weight:700}
+.rsband .t{flex:1;min-width:0;line-height:1.2}
+.rsband .t b{font-family:var(--f-display);font-size:22px;letter-spacing:.06em;display:block}
+.rsband .t small{font-weight:400}
+.rsband button{min-height:44px;padding:0 16px;border-radius:10px;border:2px solid #fff;background:rgba(0,0,0,.18);color:#fff;font-weight:700}
+.basket{position:sticky;bottom:0;z-index:15;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px calc(-1 * max(14px,env(safe-area-inset-left,0px))) 0;padding:10px max(14px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:3px solid #0B7A6E;box-shadow:0 -6px 20px rgba(0,0,0,.12)}
+.basket .btn{min-height:54px}
+.rscard{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-left:6px solid #0B7A6E;margin-bottom:12px}
+.rscard .btn{background:#0B7A6E;border-color:#0B7A6E;color:#fff}
+.rsrow{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--panel);border:1.5px solid var(--line);border-left:8px solid var(--line);border-radius:14px;padding:8px 12px 8px 8px}
+.rsrow.on{border-left-color:#0B7A6E}
+.rsrow .rt{width:52px;height:52px}
+.rsrow b{display:block;font-size:18px}
+.rsrow small{color:var(--muted)}
+@media (max-width:420px){.rsrow{grid-template-columns:52px minmax(0,1fr)}.rsrow>.rsc{grid-column:1 / -1;justify-self:end}}
+.btn.rsadd{background:#0B7A6E;border-color:#0B7A6E;color:#fff}
+.picked{color:#0B7A6E;font-weight:700}
+details.hist.rs{border-left-color:#0B7A6E}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{min-height:46px;padding:0 16px;border-radius:23px;border:2px solid var(--line);background:var(--panel);font-weight:700;font-size:16px;display:inline-flex;align-items:center;gap:8px}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -251,7 +270,7 @@ details.hist ul{margin:0;padding-left:20px}
 .footbtns{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:22px}
 .setuplink{color:var(--muted);border:1.5px dashed var(--line);background:transparent}
 .credit{display:grid;gap:6px}
-.credit div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line)}
+.credit div{display:grid;grid-template-columns:minmax(0,1fr) 64px 64px 56px;gap:14px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line)}
 .credit b{font-size:18px}
 .logrow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:15px}
 .logrow .when{color:var(--muted);font-family:var(--f-mono);font-size:13px;white-space:nowrap}
@@ -504,6 +523,15 @@ const SS={ get(k){ try{ return JSON.parse(sessionStorage.getItem(k)||'null'); }c
 function touchSetup(){ if(V.setup) SS.set('rc3-setup',{by:V.setupBy,until:Date.now()+30*60000}); }
 setInterval(()=>{ const st=SS.get('rc3-setup'); if(V.setup&&(!st||st.until<Date.now())){ V.setup=false; toast('Setup mode closed after 30 minutes.'); go('home'); } },60000);
 const me=()=>ls.get('rc3-me','');
+const RS=()=>ls.get('rc3-restock',null);
+const setRS=v=>ls.set('rc3-restock',v);
+const rsOn=tid=>{ const x=RS(); return (!V.setup&&x&&tid&&x.tid===tid)?x:null; };
+const rsCount=x=>Object.values(x.items||{}).reduce((a,b)=>a+b,0);
+const restocksOf=tid=>list('restocks/').filter(k=>k.truck===tid).sort((a,b)=>b.ts-a.ts);
+function rsBand(x){ return '<div class="rsband" role="status"><span class="t"><b>RESTOCK AFTER A CALL</b><small>Started '+fmtT(x.started)+' · '+esc(crewText(x.crew))+'</small></span><button data-act="rscancel">'+(V.arm==='rscancel'?'Tap again to cancel':'Cancel')+'</button></div>'; }
+function rsBasket(x){ const n=Object.keys(x.items||{}).length; return '<div class="basket"><span><b>'+n+' item'+(n===1?'':'s')+'</b>'+(n?' · '+rsCount(x)+' total':'<br><small class="muted">Tap + on what you used</small>')+'</span><button class="btn go" data-act="rsreview" '+(n?'':'disabled')+'>Review &amp; save</button></div>'; }
+function rsStep(id,x){ const q=(x.items||{})[id]||0; return q?'<div class="step"><button data-act="rsdec" data-n="'+esc(id)+'" aria-label="One less">−</button><output>'+q+'</output><button data-act="rsinc" data-n="'+esc(id)+'" aria-label="One more">+</button></div>':'<button class="btn small rsadd" data-act="rsinc" data-n="'+esc(id)+'">+ Restock</button>'; }
+const rsPickedUnder=(id,x)=>itemsUnder(id).reduce((a,it)=>a+((x.items||{})[it.id]||0),0);
 const setMe=n=>ls.set('rc3-me',n);
 const roster=()=>((D['meta/crew']&&D['meta/crew'].names)||[]).slice().sort((a,b)=>a.localeCompare(b));
 function addToRoster(name){ name=String(name||'').trim(); if(!name) return ''; const L=(D['meta/crew']&&D['meta/crew'].names)||[]; const hit=L.find(x=>x.toLowerCase()===name.toLowerCase()); if(hit) return hit; persist('meta/crew',{names:L.concat([name])}); logChange('','Added crew member '+name,name); return name; }
@@ -515,7 +543,7 @@ function logChange(tid,text,by){ const t=tid?truck(tid):null; persist('log/'+Dat
 function go(screen,extra){ Object.assign(V,{screen,edit:false,arm:null,finishArm:false,spotSel:null},extra||{}); render(); window.scrollTo(0,0); }
 
 /* ---------- screens ---------- */
-function setupBand(){ return V.setup?'<div class="setupband" role="status"><span class="t"><b>TRUCK SETUP</b><small>Changes here change the truck for everyone · '+esc(V.setupBy)+'</small></span><button data-act="exitsetup">Exit setup</button></div>':''; }
+function setupBand(){ if(!V.setup){ const x=rsOn(V.tid); if(x&&['truck','node','rsreview'].includes(V.screen)) return rsBand(x); } return V.setup?'<div class="setupband" role="status"><span class="t"><b>TRUCK SETUP</b><small>Changes here change the truck for everyone · '+esc(V.setupBy)+'</small></span><button data-act="exitsetup">Exit setup</button></div>':''; }
 function topbar(title,backLabel,right,code,crumbs){
   const net='<span class="netnote'+(online?'':' off')+'">'+(online?(Object.keys(Q).length?'Saving…':''):'Offline · will sync')+'</span>';
   if(!backLabel) return setupBand()+'<header class="bar">'+MARK+'<h1>'+esc(title)+'</h1>'+net+(right||'')+'</header>';
@@ -569,12 +597,13 @@ function logView(){
 function crewPage(){
   const days=V.creditDays; const since=days?Date.now()-days*864e5:0;
   const K=list('checks/').filter(k=>k.ts>=since).sort((a,b)=>b.ts-a.ts);
-  const tally={};
-  K.forEach(k=>{ const cr=crewArr(k.crew); cr.forEach(n=>{ tally[n]=tally[n]||{checks:0,items:0}; tally[n].checks++; }); Object.entries(k.credit||{}).forEach(([n,c])=>{ tally[n]=tally[n]||{checks:0,items:0}; tally[n].items+=c; }); });
-  const names=Object.keys(tally).sort((a,b)=>tally[b].checks-tally[a].checks||a.localeCompare(b));
+  const tally={}; const T0=n=>tally[n]=tally[n]||{checks:0,items:0,rs:0};
+  K.forEach(k=>{ const cr=crewArr(k.crew); cr.forEach(n=>{ T0(n); tally[n].checks++; }); Object.entries(k.credit||{}).forEach(([n,c])=>{ T0(n); tally[n].items+=c; }); });
+  list('restocks/').filter(k=>k.ts>=since).forEach(k=>crewArr(k.crew).forEach(n=>{ T0(n); tally[n].rs++; }));
+  const names=Object.keys(tally).sort((a,b)=>(tally[b].checks+tally[b].rs)-(tally[a].checks+tally[a].rs)||a.localeCompare(b));
   const seg='<div class="seg2" role="group">'+[[7,'7 days'],[30,'30 days'],[90,'90 days'],[0,'All time']].map(([d,l])=>'<button data-act="creditdays" data-v="'+d+'" aria-pressed="'+(days===d)+'">'+l+'</button>').join('')+'</div>';
   return topbar('Crew credit','Trucks')+'<div class="stack">'+seg+
-    '<div class="card"><div class="credit"><div class="lbl"><span>Crew member</span><span>Rig checks</span><span>Items</span></div>'+(names.length?names.map(n=>'<div><b>'+esc(n)+'</b><span class="mono">'+tally[n].checks+'</span><span class="mono muted">'+tally[n].items+'</span></div>').join(''):'<p class="muted">No finished checks in this time.</p>')+'</div></div>'+
+    '<div class="card"><div class="credit"><div class="lbl"><span>Crew member</span><span>Rig checks</span><span>Restocks</span><span>Items</span></div>'+(names.length?names.map(n=>'<div><b>'+esc(n)+'</b><span class="mono">'+tally[n].checks+'</span><span class="mono">'+tally[n].rs+'</span><span class="mono muted">'+tally[n].items+'</span></div>').join(''):'<p class="muted">No checks or restocks in this time.</p>')+'</div></div>'+
     (K.length?'<div class="lbl">Recent checks</div><div class="card" style="padding:6px 12px">'+K.slice(0,30).map(k=>'<div class="logrow"><span class="when">'+new Date(k.ts).toLocaleDateString([], {month:'short',day:'numeric'})+' '+fmtT(k.ts)+'</span><span><b>'+esc(k.truckName||'')+'</b> · '+esc(crewText(k.crew)||'—')+'</span><span class="who">'+(k.credit?Object.entries(k.credit).map(([n,c])=>esc(n)+' '+c).join(' · '):'')+'</span></div>').join('')+'</div>':'')+'</div>';
 }
 async function loadLog(){ V.logRows=null; render(); try{ const r=await call('listPrefix','log/',500); const rows=Object.values(r||{}).map(j=>{ try{ return JSON.parse(j); }catch(e){ return null; } }).filter(Boolean);
@@ -609,8 +638,11 @@ function truckView(){
   const needs=needsList(t.id).filter(n=>!n.done).length;
   const tabs='<div class="tabs" role="group"><button data-act="tab" data-v="truck" aria-pressed="'+(V.tab==='truck')+'">Truck</button><button data-act="tab" data-v="needs" aria-pressed="'+(V.tab==='needs')+'">Needed'+(needs?'<span class="badge">'+needs+'</span>':'')+'</button><button data-act="tab" data-v="history" aria-pressed="'+(V.tab==='history')+'">History</button></div>';
   if(V.setup) return topbar(t.name,'Setup')+'<p class="hint" style="margin:0 0 12px">Tap a compartment to set it up, or add a new one. Its spot on the layout comes from where you say it is.</p>'+truckBody(t);
+  const rx=rsOn(t.id);
+  if(rx) return topbar(t.name,'Trucks')+'<p class="hint" style="margin:0 0 12px">Find what you used: search for it, or open the compartment and bag. Tap <b>+ Restock</b> on each item.</p>'+truckBody(t)+rsBasket(rx);
   const body= V.tab==='needs'?needsView(t): V.tab==='history'?historyView(t): truckBody(t);
-  return topbar(t.name,'Trucks')+checkCard(t.id)+tabs+body;
+  const rscard='<div class="card rscard"><div><b>Used supplies on a call?</b><br><span class="muted" style="font-size:15px">Restock just what you used. No full check.</span></div><button class="btn" data-act="rsbegin">Restock after a call</button></div>';
+  return topbar(t.name,'Trucks')+rscard+checkCard(t.id)+tabs+body;
 }
 function nodeThumb(n){ return n.photo?thumbOf(n.photo.file):''; }
 function truckBody(t){
@@ -619,7 +651,9 @@ function truckBody(t){
   if(q){
     const hits=allNodes().filter(n=>n.truck===t.id&&((n.name||'').toLowerCase().includes(q)||(n.code||'').toLowerCase()===q)).slice(0,60);
     const hl=s=>{ const i=s.toLowerCase().indexOf(q); return i<0?esc(s):esc(s.slice(0,i))+'<mark>'+esc(s.slice(i,i+q.length))+'</mark>'+esc(s.slice(i+q.length)); };
+    const rx=rsOn(t.id);
     return search+'<div class="results">'+(hits.length?hits.map(n=>{ const th=nodeThumb(n);
+      if(rx&&n.kind==='item') return '<div class="rsrow'+((rx.items||{})[n.id]?' on':'')+'"><span class="rt">'+(th?'<img src="'+esc(th)+'" alt="">':ico('item'))+'</span><span style="min-width:0"><b>'+hl(n.name)+'</b><small>'+esc(pathText(n.id))+'</small></span><span class="rsc">'+rsStep(n.id,rx)+'</span></div>';
       return '<button class="res" data-act="open" data-n="'+esc(n.id)+'"><span class="rt">'+(th?'<img src="'+esc(th)+'" alt="">':kindIcon(n))+'</span><span><b>'+hl(n.name)+'</b><small>'+esc(pathText(n.id)||LOC_NAME[n.loc]||'')+'</small></span><span class="chev">›</span></button>'; }).join(''):'<div class="card muted">Nothing on '+esc(t.name)+' matches "'+esc(V.q)+'".</div>')+'</div>';
   }
   const cur=curOf(t.id); const C=topComps(t.id);
@@ -646,10 +680,15 @@ function needsView(t){
   return head+(open.length?'<div class="list">'+open.map(row).join('')+'</div>':'<div class="card empty"><b>Nothing needed.</b><span class="muted">Items that fail during a check show up here.</span></div>')+
     (done.length?'<div class="lbl" style="margin:18px 0 8px">Restocked on this check</div><div class="list">'+done.map(row).join('')+'</div>':'')+'<textarea id="copybox" readonly hidden style="width:100%;min-height:140px;margin-top:10px"></textarea>';
 }
+function rsHist(k){
+  const items=k.items||[]; const n=items.reduce((a,b)=>a+(b.qty||0),0);
+  return '<details class="hist rs" id="r'+k.ts+'"><summary><span><b>'+fmtDT(k.ts)+'</b> · Restock after a call<br><small class="muted">'+esc(crewText(k.crew)||'—')+'</small></span><span class="pill" style="--s:#0B7A6E">'+n+' restocked</span></summary><div class="body"><div class="loglist">'+
+    items.map(x=>'<div><span class="mono muted">'+(x.qty||1)+'×</span><span>'+esc(x.name)+' <span class="muted">('+esc(x.path||'')+')</span></span><span class="muted">'+esc(x.by||k.by||'')+'</span></div>').join('')+'</div></div></details>';
+}
 function historyView(t){
-  const K=checksOf(t.id);
-  if(!K.length) return '<div class="card empty"><b>No finished checks yet.</b><span class="muted">Each finished check is kept here with what failed and what was restocked.</span></div>';
-  return '<div class="list">'+K.map(k=>{ const open=(k.failed||[]).filter(f=>!f.restocked).length; const st=open?((k.failed||[]).some(f=>f.critical&&!f.restocked)?'crit':'short'):'ok'; const R=k.restocked||[];
+  const K=checksOf(t.id).map(k=>Object.assign({_t:'c'},k)).concat(restocksOf(t.id).map(k=>Object.assign({_t:'r'},k))).sort((a,b)=>b.ts-a.ts);
+  if(!K.length) return '<div class="card empty"><b>Nothing here yet.</b><span class="muted">Finished rig checks and restocks after calls are kept here.</span></div>';
+  return '<div class="list">'+K.map(k=>{ if(k._t==='r') return rsHist(k); const open=(k.failed||[]).filter(f=>!f.restocked).length; const st=open?((k.failed||[]).some(f=>f.critical&&!f.restocked)?'crit':'short'):'ok'; const R=k.restocked||[];
     return '<details class="hist st-'+st+'" id="h'+k.ts+'"><summary><span><b>'+fmtDT(k.ts)+'</b><br><small class="muted">'+esc(crewText(k.crew)||'—')+(k.miles?' · '+esc(k.miles)+' mi':'')+' · '+k.pass+' passed · '+(k.failed||[]).length+' failed · '+k.notChecked+' not checked</small></span><span class="pill">'+(open?open+' still needed':R.length?R.length+' restocked':'All good')+'</span></summary><div class="body">'+
       ((k.failed||[]).length?'<div><span class="lbl">Failed</span><ul>'+k.failed.map(f=>'<li>'+esc(f.name)+' <span class="muted">('+esc(f.path)+')</span>'+(f.restocked?' ✓':'')+'</li>').join('')+'</ul></div>':'')+
       (k.credit&&Object.keys(k.credit).length?'<div><span class="lbl">Who checked what</span><div>'+Object.entries(k.credit).map(([n,c])=>esc(n)+': '+c+' item'+(c===1?'':'s')).join(' · ')+'</div></div>':'')+'<div><span class="lbl">Restock log</span>'+(R.length?'<div class="loglist">'+R.map(r=>'<div><span class="mono muted">'+fmtT(r.t)+'</span><span>'+esc(r.name)+(r.qty>1?' × '+r.qty:'')+' <span class="muted">('+esc(r.path||'')+')</span></span><span class="muted">'+esc(r.by||'')+'</span></div>').join('')+'</div>':'<div class="muted">Nothing restocked.</div>')+'</div></div></details>'; }).join('')+'</div>';
@@ -685,6 +724,24 @@ function itemRow(it,cur,editing){
   }
   return '<div class="item st-'+st+'" id="it-'+esc(it.id)+'"><span class="rt">'+(th?'<img src="'+esc(th)+'" alt="">':ico('item'))+'</span><div style="min-width:0"><b>'+esc(it.name)+'</b><small>'+meta+(it.critical?' · <span class="c">Critical</span>':'')+'</small></div>'+ctl+'</div>';
 }
+function rsItemRow(it,x){
+  const th=nodeThumb(it); const q=(x.items||{})[it.id]||0;
+  return '<div class="rsrow'+(q?' on':'')+'" id="it-'+esc(it.id)+'"><span class="rt">'+(th?'<img src="'+esc(th)+'" alt="">':ico('item'))+'</span><span style="min-width:0"><b>'+esc(it.name)+'</b><small>'+(it.type==='count'?'Should have '+(+it.par||0):'Pass / fail item')+'</small></span><span class="rsc">'+rsStep(it.id,x)+'</span></div>';
+}
+function rsStartView(){
+  const t=truck(V.tid); if(!t) return homeView(); const R=roster(); const P=V.rpick||[];
+  return topbar('Restock after a call',t.name)+'<div class="nodebody"><div class="card stack" style="border-left:6px solid #0B7A6E">'+
+    '<span class="lbl">Who is restocking? Tap everyone</span><div class="chips">'+R.concat(P.filter(n=>!R.includes(n))).map(n=>'<button class="chip" data-act="rspick" data-v="'+esc(n)+'" aria-pressed="'+P.includes(n)+'">'+esc(n)+'</button>').join('')+'</div>'+
+    '<div class="row"><input id="rsnew" class="sinp" placeholder="Someone not listed? Type their name" autocomplete="off" style="flex:1;min-width:180px"><button class="btn small" data-act="rsaddname">Add</button></div>'+
+    '<button class="btn wide rsadd" data-act="rsgo" style="min-height:60px">Start restocking</button></div></div>';
+}
+function rsReviewView(){
+  const x=RS(); if(!x) return truckView(); const t=truck(x.tid);
+  const rows=Object.entries(x.items||{}).map(([id,q])=>{ const n=node(id); if(!n) return ''; const th=nodeThumb(n);
+    return '<div class="rsrow on"><span class="rt">'+(th?'<img src="'+esc(th)+'" alt="">':ico('item'))+'</span><span style="min-width:0"><b>'+esc(n.name)+'</b><small>'+esc(pathText(id))+'</small></span><span class="rsc">'+rsStep(id,x)+'</span></div>'; }).join('');
+  return topbar('Review restock',t?t.name:'Back')+'<div class="nodebody"><p class="muted" style="margin:0">'+fmtDT(Date.now())+' · '+esc(crewText(x.crew))+'</p><div class="list">'+(rows||'<div class="card muted">Nothing picked yet.</div>')+'</div>'+
+    '<div class="row between"><button class="btn" data-act="rsmore">+ Add more</button><button class="btn go" data-act="rssave" '+(rows?'':'disabled')+' style="min-width:180px">Save restock</button></div></div>';
+}
 function editRow(k){
   const isItem=k.kind==='item'; const th=nodeThumb(k);
   return '<div class="erow" id="it-'+esc(k.id)+'"><div class="top"><input class="sinp" data-chg="name" data-n="'+esc(k.id)+'" value="'+esc(k.name)+'" aria-label="Name"><button class="iconbtn" data-act="photo" data-k="node:'+esc(k.id)+'" aria-label="Photo">'+(th?'<img src="'+esc(th)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px">':ico('cam'))+'</button></div>'+
@@ -694,7 +751,7 @@ function editRow(k){
 }
 function nodeView(){
   const n=node(V.nid); if(!n) return truckView();
-  const t=truck(n.truck); const cur=V.setup?null:curOf(n.truck); const kids=kidsOf(n.id); const editing=V.setup;
+  const t=truck(n.truck); const rx=rsOn(n.truck); const cur=(V.setup||rx)?null:curOf(n.truck); const kids=kidsOf(n.id); const editing=V.setup;
   const parent=n.parent?node(n.parent):null; const backLabel=parent?(parent.code||parent.name):(t?t.name:'Truck');
   const s=nodeStats(n,cur);
   let head='';
@@ -705,20 +762,21 @@ function nodeView(){
       '<div class="row"><button class="btn small" data-act="move" data-n="'+esc(n.id)+'">'+ico('move')+' Move '+(n.kind==='comp'?'to another truck':'somewhere else')+'</button><button class="btn small danger" data-act="del" data-n="'+esc(n.id)+'">'+(V.arm==='d'+n.id?'Delete with '+itemsUnder(n.id).length+' items?':'Delete this '+(n.kind==='comp'?'compartment':(n.label||'bag').toLowerCase())+'')+'</button></div></div>';
   }
   const passAll= cur&&!editing&&s.total? '<button class="btn go wide" data-act="passall">✓ Everything in here passes ('+s.total+')</button><div class="muted" style="text-align:center;font-size:15px;margin-top:-6px">'+s.pass+' passed · '+s.fail+' failed · '+s.left+' not checked</div>':'';
-  const hint= !cur&&!editing&&s.total? '<div class="banner">Viewing only. Go back to '+esc(t?t.name:'the truck')+' and tap Start check to mark items.</div>':'';
+  const hint= !cur&&!editing&&!rx&&s.total? '<div class="banner">Viewing only. Go back to '+esc(t?t.name:'the truck')+' and tap Start check to mark items.</div>':'';
   const containers=kids.filter(k=>k.kind!=='item'), items=kids.filter(k=>k.kind==='item');
   const contHTML=containers.map(k=>{ if(editing) return editRow(k); const ks=nodeStats(k,cur); const th=nodeThumb(k);
-    return '<button class="kid st-'+ks.st+'" id="it-'+esc(k.id)+'" data-act="open" data-n="'+esc(k.id)+'"><span class="rt">'+(th?'<img src="'+esc(th)+'" alt="">':kindIcon(k))+'</span><span style="min-width:0"><b>'+esc(k.name)+'</b><small>'+esc(k.label||'Bag')+' · '+(cur?(ks.pass+ks.fail)+' of '+ks.total+' checked'+(ks.fail?' · '+ks.fail+' failed':''):ks.total+' item'+(ks.total===1?'':'s'))+'</small></span><span class="chev">›</span></button>'; }).join('');
-  const itemHTML=items.map(it=>itemRow(it,cur,editing)).join('');
+    const pk=rx?rsPickedUnder(k.id,rx):0;
+    return '<button class="kid st-'+ks.st+'" id="it-'+esc(k.id)+'" data-act="open" data-n="'+esc(k.id)+'"><span class="rt">'+(th?'<img src="'+esc(th)+'" alt="">':kindIcon(k))+'</span><span style="min-width:0"><b>'+esc(k.name)+'</b><small>'+(pk?'<span class="picked">'+pk+' picked · </span>':'')+esc(k.label||'Bag')+' · '+(cur?(ks.pass+ks.fail)+' of '+ks.total+' checked'+(ks.fail?' · '+ks.fail+' failed':''):ks.total+' item'+(ks.total===1?'':'s'))+'</small></span><span class="chev">›</span></button>'; }).join('');
+  const itemHTML=items.map(it=>rx?rsItemRow(it,rx):itemRow(it,cur,editing)).join('');
   const add= editing&&n.kind!=='item'?'<div class="card stack"><b>Add inside '+esc(n.name)+'</b><div class="kindpick">'+KINDS.concat(['Item']).map(k=>'<button data-act="addkind" data-v="'+k+'" aria-pressed="'+(V.addKind===k)+'">'+k+'</button>').join('')+'</div>'+
     '<div class="row"><input id="newname" class="sinp" placeholder="'+(V.addKind==='Item'?'Item name, e.g. 4×4 gauze':V.addKind+' name, e.g. Airway '+V.addKind.toLowerCase())+'" style="flex:1;min-width:180px">'+(V.addKind==='Item'?'<input id="newpar" class="sinp" type="number" min="0" inputmode="numeric" value="1" style="width:80px" aria-label="Should have"><select id="newtype" class="sinp" style="width:auto"><option value="count">Count</option><option value="check">Pass / fail</option></select>':'')+'<button class="btn small primary" data-act="addchild">Add</button></div></div>':'';
   const empty= !kids.length&&!editing? '<div class="card empty"><b>Nothing in here yet.</b><span class="muted">A supervisor adds what goes here in Truck setup.</span></div>':'';
   let nav='';
-  if(!editing&&n.kind==='comp'){ const C=topComps(n.truck); const i=C.findIndex(c=>c.id===n.id); const prev=C[i-1], next=C[i+1];
+  if(!editing&&!rx&&n.kind==='comp'){ const C=topComps(n.truck); const i=C.findIndex(c=>c.id===n.id); const prev=C[i-1], next=C[i+1];
     nav='<div class="navfoot">'+(prev?'<button class="btn" data-act="open" data-n="'+esc(prev.id)+'">‹ '+esc(prev.code||prev.name)+'</button>':'<button class="btn" data-act="truck" data-t="'+esc(n.truck)+'">‹ Truck</button>')+(next?'<button class="btn primary next" data-act="open" data-n="'+esc(next.id)+'"><span>Next: '+esc((next.code?next.code+' ':'')+next.name)+'</span><span>›</span></button>':'<button class="btn primary" data-act="truck" data-t="'+esc(n.truck)+'">Back to truck</button>')+'</div>'; }
   if(n.kind==='item') return topbar(n.name,backLabel,'','',crumbsFor(n))+'<div class="nodebody">'+photoPanel(n)+'<div class="list">'+itemRow(n,cur,editing)+'</div></div>';
   return topbar(n.name,backLabel,'',n.code,crumbsFor(n))+
-    '<div class="nodebody">'+head+photoPanel(n)+hint+passAll+(contHTML?'<div class="list">'+contHTML+'</div>':'')+(itemHTML?'<div class="list">'+itemHTML+'</div>':'')+empty+add+'</div>'+nav;
+    '<div class="nodebody">'+head+photoPanel(n)+hint+passAll+(contHTML?'<div class="list">'+contHTML+'</div>':'')+(itemHTML?'<div class="list">'+itemHTML+'</div>':'')+empty+add+'</div>'+nav+(rx?rsBasket(rx):'');
 }
 function addCompView(){
   const t=truck(V.tid); if(!t) return homeView();
@@ -752,9 +810,9 @@ function manageView(){
 function render(){
   if(!loaded||drag) return;
   const ae=document.activeElement, fid=ae&&ae.id; let ss=null,se=null; try{ ss=ae.selectionStart; se=ae.selectionEnd; }catch(e){}
-  const keep={}; ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
+  const keep={}; ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew','rsnew','rsrun'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
   const od=[...document.querySelectorAll('details[id][open]')].map(d=>d.id);
-  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): homeView();
+  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='rsreview'?rsReviewView(): homeView();
   document.getElementById('app').innerHTML=html;
   Object.entries(keep).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
   od.forEach(id=>{ const d=document.getElementById(id); if(d) d.open=true; });
@@ -795,8 +853,28 @@ const A={
     const cur=curOf(V.tid); if(cur){ const c=clone(cur); c.crew=crewArr(c.crew); if(!c.crew.includes(n)) c.crew.push(n); setCur(V.tid,c); if(!crewArr(cur.crew).includes(me())) setMe(n); V.addCrew=false; toast(n+' added to this check'); } else if(!V.pick.includes(n)) V.pick=V.pick.concat([n]); },
   togglecrew:()=>{ V.addCrew=!V.addCrew; },
   joincrew:b=>{ const n=b.dataset.v; const c=clone(curOf(V.tid)); c.crew=crewArr(c.crew); if(!c.crew.includes(n)) c.crew.push(n); setCur(V.tid,c); if(!crewArr(curOf(V.tid).crew).includes(me())||!me()) setMe(n); V.addCrew=false; toast(n+' added to this check'); },
+  rsbegin:()=>{ V.rpick=me()&&roster().includes(me())?[me()]:[]; go('rsstart'); return false; },
+  rspick:b=>{ const n=b.dataset.v; V.rpick=(V.rpick||[]).includes(n)?V.rpick.filter(x=>x!==n):(V.rpick||[]).concat([n]); },
+  rsaddname:()=>{ const el=document.getElementById('rsnew'); const n=addToRoster(el.value); if(!n) return false; el.value=''; if(!(V.rpick||[]).includes(n)) V.rpick=(V.rpick||[]).concat([n]); },
+  rsgo:()=>{ const typed=document.getElementById('rsnew').value.trim(); if(typed){ const n=addToRoster(typed); if(n&&!(V.rpick||[]).includes(n)) V.rpick=(V.rpick||[]).concat([n]); }
+    const crew=(V.rpick||[]).slice(); if(!crew.length){ toast('Tap who is restocking, or type a name.'); return false; } if(!crew.includes(me())) setMe(crew[0]);
+    setRS({tid:V.tid,crew,items:{},started:Date.now()}); V.q=''; go('truck'); return false; },
+  rsinc:b=>{ const x=RS(); if(!x) return; x.items=x.items||{}; x.items[b.dataset.n]=(x.items[b.dataset.n]||0)+1; setRS(x); },
+  rsdec:b=>{ const x=RS(); if(!x) return; const k=b.dataset.n; x.items[k]=(x.items[k]||0)-1; if(x.items[k]<=0) delete x.items[k]; setRS(x); },
+  rsreview:()=>{ go('rsreview'); return false; },
+  rsmore:()=>{ go('truck'); return false; },
+  rscancel:()=>{ if(V.arm!=='rscancel'){ V.arm='rscancel'; return; } V.arm=null; setRS(null); toast('Restock cancelled'); go('truck'); return false; },
+  rssave:()=>{ const x=RS(); if(!x) return; const t=truck(x.tid); const by=me()||crewArr(x.crew)[0]||''; const now=Date.now();
+    const items=Object.entries(x.items||{}).filter(([id,q])=>q>0).map(([id,q])=>{ const n=node(id); return {node:id,name:n?n.name:'Item',path:pathText(id),qty:q,by}; });
+    if(!items.length){ toast('Nothing picked yet.'); return false; }
+    const rec={truck:x.tid,truckName:t?t.name:'',ts:now,started:x.started,crew:crewArr(x.crew),run:x.run||'',items,by};
+    persist('restocks/'+x.tid+'_'+now,rec);
+    const cur=curOf(x.tid);
+    if(cur){ const c=clone(cur); let ch=false; items.forEach(it=>{ if(c.res&&c.res[it.node]==='fail'){ c.res[it.node]='pass'; if(c.have) delete c.have[it.node]; c.restocked=(c.restocked||[]).concat([{node:it.node,name:it.name,path:it.path,qty:it.qty,t:now,by,run:x.run||''}]); ch=true; } }); if(ch) setCur(x.tid,c); }
+    else { const k=checksOf(x.tid)[0]; if(k){ const rc=clone(k); const kid=rc.id; delete rc.id; let ch=false; (rc.failed||[]).forEach(f=>{ const hit=items.find(it=>it.node===f.node); if(hit&&!f.restocked){ f.restocked=true; ch=true; rc.restocked=(rc.restocked||[]).concat([{node:f.node,name:f.name,path:f.path,qty:hit.qty,t:now,by,run:x.run||''}]); } }); if(ch) persist('checks/'+kid,rc); } }
+    setRS(null); toast('Restock saved: '+items.reduce((a,b)=>a+b.qty,0)+' items'); go('truck',{tid:x.tid,tab:'history'}); return false; },
   setme:b=>{ setMe(b.dataset.v); toast('This phone is now '+b.dataset.v); },
-  back:()=>{ const s=V.screen; if(['pin','roster','log','trucks','gate','crew'].includes(s)){ go('home'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
+  back:()=>{ const s=V.screen; if(['pin','roster','log','trucks','gate','crew'].includes(s)){ go('home'); return false; } if(s==='rsstart'||s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
   open:b=>{ openNode(b.dataset.n); return false; },
   tab:b=>{ V.tab=b.dataset.v; V.finishArm=false; },
   clearq:()=>{ V.q=''; render(); const el=document.getElementById('q'); if(el) el.focus(); return false; },
@@ -863,7 +941,7 @@ const A={
   install:()=>{ if(installEvt){ installEvt.prompt(); installEvt=null; } },
   hideinstall:()=>{ ls.set('rc3-hideinstall',true); }
 };
-const ARMED=['del','discard','tdel','photodel'];
+const ARMED=['del','discard','tdel','photodel','rscancel'];
 const SETUP_ONLY=['addcomp','savecomp','addchild','up','del','move','moveto','photo','photodel','spotsel','spotdel','spotnew','tmove','tdel','tadd','manage','pinpage','savepin','rosterpage','rosteradd','rosterdel'];
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
@@ -871,10 +949,10 @@ document.addEventListener('click',e=>{
   if(!V.setup&&SETUP_ONLY.includes(act)){ toast('That is part of Truck setup.'); return; } if(act!=='finish'&&act!=='discard') V.finishArm=false;
   const r=A[act]&&A[act](b,e); if(r!==false) render();
 });
-document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='crewnew'){ A.crewadd(); render(); } if(e.key==='Enter'&&e.target.id==='gpin'&&!document.getElementById('gpin2')){ if(A.entersetup()!==false) render(); } if(e.key==='Enter'&&e.target.id==='q') e.target.blur(); if(e.key==='Enter'&&e.target.id==='newname'){ A.addchild(); render(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='rsnew'){ A.rsaddname(); render(); } if(e.key==='Enter'&&e.target.id==='crewnew'){ A.crewadd(); render(); } if(e.key==='Enter'&&e.target.id==='gpin'&&!document.getElementById('gpin2')){ if(A.entersetup()!==false) render(); } if(e.key==='Enter'&&e.target.id==='q') e.target.blur(); if(e.key==='Enter'&&e.target.id==='newname'){ A.addchild(); render(); } });
 document.addEventListener('input',e=>{ if(e.target.dataset.inp==='q'){ V.q=e.target.value; render(); } });
 document.addEventListener('change',e=>{ if(e.target.id==='gname'){ const nw=document.getElementById('gnew'); if(nw) nw.hidden=e.target.value!=='__new'; return; }
-  const t=e.target,k=t.dataset.chg; if(!k) return; if(!V.setup){ render(); return; } touchSetup();
+  const t=e.target,k=t.dataset.chg; if(!k) return; if(k==='rsrun'){ const x=RS(); if(x){ x.run=t.value.trim(); setRS(x); } return; } if(!V.setup){ render(); return; } touchSetup();
   if(k==='tname'){ const tr=truck(t.dataset.t); if(tr){ const o=clone(tr); delete o.id; o.name=t.value.trim()||tr.name; if(o.name!==tr.name){ persist('trucks/'+tr.id,o); logChange(tr.id,'Renamed truck '+tr.name+' to '+o.name); } } render(); return; }
   if(k==='spotnode'){ const n=node(V.nid); n.spots=(n.spots||[]).map(s=>s.id===t.dataset.s?Object.assign({},s,{node:t.value}):s); saveNode(n); if(t.value){ const kk=node(t.value); logChange(n.truck,'Linked a box on the photo of '+fullPath(n.id)+' to "'+(kk?kk.name:'')+'"'); V.spotSel=null; } render(); return; }
   const n=node(t.dataset.n); if(!n) return; const before=clone(n); const where=fullPath(n.id);
