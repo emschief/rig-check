@@ -442,6 +442,82 @@ table.bls td.c .autolbl{display:block;font-size:11px;font-weight:600;font-family
 .seg2 button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .empty{text-align:center;padding:28px 16px;display:grid;gap:10px;justify-items:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- visual polish ---------- */
+:root{--navh:84px;--sh1:0 1px 2px rgba(16,30,58,.06),0 6px 18px -10px rgba(16,30,58,.22);--sh2:0 2px 4px rgba(16,30,58,.06),0 18px 40px -18px rgba(16,30,58,.38);
+  --navy1:#0E1B33;--navy2:#1B3A6B;--teal:#0B7A6E;--indigo:#4655C4;--orange:#E8590C;--line2:rgba(19,32,58,.09)}
+@media (prefers-color-scheme: dark){:root{--sh1:0 1px 2px rgba(0,0,0,.4),0 8px 22px -12px rgba(0,0,0,.7);--sh2:0 2px 6px rgba(0,0,0,.4),0 20px 44px -18px rgba(0,0,0,.8);--navy1:#0A1424;--navy2:#17305A;--line2:rgba(255,255,255,.07);--indigo:#8D98F0;--teal:#2FB3A3}}
+body{background:radial-gradient(1200px 520px at 50% -180px,color-mix(in srgb,var(--accent) 16%,transparent),transparent 70%),var(--bg);background-attachment:fixed}
+h1{letter-spacing:.005em}
+.card,.person,.repcard,.placed,.pcard,.blswrap,.mlist,.reqrow,.urow,.qbtn,.kid,.item,.rsrow,.need,.erow,.hist,.ccard,.tcard,.step,.blssum div{box-shadow:var(--sh1);border-color:var(--line2)}
+.card{border-radius:20px}
+.btn{border-radius:14px;border-color:var(--line2);box-shadow:0 1px 2px rgba(16,30,58,.06);transition:transform .08s ease,box-shadow .15s ease}
+.btn:active,.qbtn:active,.urow:active,.kpi:active,.htile:active,.kid:active,.ccard:active{transform:scale(.98)}
+.btn.primary{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 88%,#fff),var(--accent));box-shadow:0 8px 18px -10px color-mix(in srgb,var(--accent) 80%,transparent)}
+.btn.go{background:linear-gradient(180deg,color-mix(in srgb,var(--ok) 85%,#fff),var(--ok));box-shadow:0 10px 22px -12px color-mix(in srgb,var(--ok) 90%,transparent)}
+.btn.rsadd{background:linear-gradient(180deg,color-mix(in srgb,var(--teal) 85%,#fff),var(--teal));box-shadow:0 10px 22px -12px color-mix(in srgb,var(--teal) 90%,transparent)}
+.inp,.sinp,.field input,.field select{border-color:var(--line2);background:color-mix(in srgb,var(--bg) 70%,var(--panel))}
+.inp:focus,.sinp:focus,.search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.search input{box-shadow:var(--sh1);border-color:var(--line2)!important}
+.back{border-radius:999px;border-color:var(--line2);box-shadow:var(--sh1);min-height:46px}
+.bar.sub h1{font-size:32px}
+.thead{padding-block:18px 14px}
+.thead h1{font-size:34px}
+.hello{font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.unitchip{border-color:var(--line2);box-shadow:var(--sh1);padding:9px 14px 9px 12px}
+.unitchip i{box-shadow:0 0 0 3px color-mix(in srgb,var(--s,var(--idle)) 25%,transparent)}
+/* hero */
+.hero{position:relative;overflow:hidden;color:#fff;border:0;border-radius:26px;padding:18px;background:linear-gradient(145deg,var(--navy2),var(--navy1) 70%);box-shadow:var(--sh2)}
+.hero:before{content:"";position:absolute;right:-60px;top:-70px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),transparent 65%)}
+.hero:after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,transparent,#E0483C 18%,#E0483C 82%,transparent)}
+.hero > *{position:relative}
+.hero h2{color:#fff;font-size:34px}
+.hero .art{width:104px;border-radius:16px;box-shadow:0 8px 20px -8px rgba(0,0,0,.6);outline:2px solid rgba(255,255,255,.12)}
+.hero .top{grid-template-columns:104px 1fr}
+.hero .status{display:inline-flex;margin-top:6px;padding:4px 12px 4px 10px;border-radius:999px;background:rgba(255,255,255,.1);color:#fff;font-size:15px}
+.hero .status .dot{background:var(--s);box-shadow:0 0 0 3px color-mix(in srgb,var(--s) 35%,transparent)}
+.hero .status.st-idle .dot{background:#F2B33D}
+.hero .bigbtn{border:0;min-height:66px;font-size:21px;letter-spacing:.01em}
+.hero .bigbtn svg{width:26px;height:26px}
+.hero .kpis{gap:10px}
+.hero .kpi{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:11px 12px}
+.hero .kpi span{color:rgba(255,255,255,.72)}
+.hero .kpi.bad b{color:#FF8A80}.hero .kpi.good b{color:#7BE3A6}
+/* quick actions + lists */
+.qbtn{border-radius:18px;border:1px solid var(--line2);padding:14px;min-height:72px}
+.qbtn .ti,.mlist button .ti{width:44px;height:44px;border-radius:13px;color:var(--indigo);background:color-mix(in srgb,currentColor 13%,transparent)}
+.qbtn .ti svg{width:24px;height:24px}
+.qbtn.rs .ti,.mlist button.rs .ti{color:var(--teal)}
+.qbtn.adm .ti,.mlist button.adm .ti{color:var(--orange)}
+.mlist{border-radius:20px;border:1px solid var(--line2)}
+.mlist button{padding:15px 16px}
+.mlist button .ti{width:40px;height:40px;border-radius:12px}
+.urow{border-radius:18px;border:1px solid var(--line2)}
+.urow.on{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent),var(--sh1)}
+.urow i{box-shadow:0 0 0 4px color-mix(in srgb,var(--s,var(--idle)) 22%,transparent)}
+.sec .lbl,.lbl{letter-spacing:.1em}
+/* check screens */
+.item,.kid{border-radius:18px;border-left-width:6px}
+.tri{border-radius:14px;border-color:var(--line2)}
+.tri button{border-left-color:var(--line2)}
+.tri .pass[aria-pressed="true"]{background:linear-gradient(180deg,color-mix(in srgb,var(--ok) 85%,#fff),var(--ok))}
+.tri .fail[aria-pressed="true"]{background:linear-gradient(180deg,color-mix(in srgb,var(--crit) 85%,#fff),var(--crit))}
+.ccard{border-width:2px;border-radius:18px}
+.diag.card{border-radius:22px}
+.rt{border-radius:12px}
+.checkcard{border-radius:22px}
+/* tab bar: floating */
+.tabbar{left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom,0px));padding:6px;border:1px solid var(--line2);border-radius:24px;background:color-mix(in srgb,var(--panel) 86%,transparent);box-shadow:0 12px 32px -14px rgba(16,30,58,.45)}
+.tabbar button{border-radius:18px;min-height:56px;font-size:12px;transition:background .15s ease,color .15s ease}
+.tabbar button[aria-current="page"]{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.tabbar button[aria-current="page"] svg{transform:translateY(-1px)}
+.tabbar .dotb{box-shadow:0 0 0 2px var(--panel)}
+.setupband{background-size:auto}
+.navfoot{bottom:calc(var(--navh) - 10px + env(safe-area-inset-bottom,0px));padding-bottom:18px;margin-top:10px}
+.basket{bottom:calc(var(--navh) - 10px + env(safe-area-inset-bottom,0px));padding-bottom:18px}
+.toast{border-radius:16px;box-shadow:var(--sh2)}
+.sheet{border-radius:26px 26px 0 0;box-shadow:var(--sh2)}
+.sheet:before{content:"";justify-self:center;width:44px;height:5px;border-radius:3px;background:var(--line);margin:-6px 0 4px}
 </style>
 </head><body>
 <div class="wrap" id="app"><div class="loading">Loading trucks…</div></div>
@@ -770,7 +846,7 @@ function homeDash(){
   if(rx) main='<button class="btn wide bigbtn rsadd" data-act="hrestock">Continue restock <small>'+Object.keys(rx.items||{}).length+' picked</small></button>';
   else if(cur){ const st=stats(truckItems(u.id),cur); main='<button class="btn go wide bigbtn" data-act="hcheck">Continue rig check <small>'+(st.pass+st.fail)+' of '+st.total+'</small></button>'; }
   else main='<button class="btn go wide bigbtn" data-act="hcheck">'+ico('clip')+' Start rig check</button>';
-  const hero='<section class="hero st-'+s.st+'"><div class="top"><div class="art">'+(ph?'<img src="'+esc(legacyThumb(ph))+'" alt="">':truckArt(u.name))+'</div><div><h2>'+esc(u.name)+'</h2><span class="status st-'+s.st+'"><i class="dot"></i>'+esc(s.text)+'</span></div></div>'+main+
+  const hero='<section class="hero st-'+s.st+'"><div class="top"><div class="art">'+(ph?'<img src="'+esc(legacyThumb(ph))+'" alt="">':truckArt(u.name))+'</div><div><h2>'+esc(u.name)+'</h2><span class="status st-'+s.st+'"><i class="dot"></i>'+({prog:'Check in progress',ok:'Checked today · ready',short:'Checked today · items needed',idle:last?'Not checked today':'Never checked'}[s.st]||s.text)+'</span></div></div>'+main+
     '<div class="kpis"><button class="kpi '+(open?'bad':'good')+'" data-act="hrestock"><b>'+open+'</b><span>Needed</span></button><button class="kpi '+(bt.sh?'bad':bt.no?'':'good')+'" data-act="hbls"><b>'+(bt.sh||(bt.no?'–':'0'))+'</b><span>'+(bt.sh?'Short on list':bt.no?'List not counted':'Nothing short')+'</span></button><button class="kpi" data-act="hhistory"><b style="font-size:17px;font-family:var(--f-body)">'+(last?ago(last.ts):'Never')+'</b><span>Last check</span></button></div></section>';
   const quick='<div class="qrow" style="margin-top:12px">'+(rx?'':'<button class="qbtn rs" data-act="hrestock"><span class="ti">'+ico('plusbox')+'</span><span>Restock<small>After a call</small></span></button>')+'<button class="qbtn" data-act="hhistory"><span class="ti">'+ico('clock')+'</span><span>History<small>Checks and restocks</small></span></button>'+
     (isAdmin()?(()=>{ const rq=blsAll().filter(x=>!x.opt); const dn=rq.filter(it=>reqPlacedQty(u.id,it)>=Math.max(1,it.req)).length; return dn<rq.length?'<button class="qbtn adm" data-act="tab_setup"><span class="ti">'+ico('gear')+'</span><span>Finish setup<small>'+dn+' of '+rq.length+' items placed</small></span></button>':''; })():'')+'</div>';
