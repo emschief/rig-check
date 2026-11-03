@@ -317,6 +317,30 @@ table.bls tr.grp td.eq{background:var(--bg)}
 table.bls td.c input{width:52px;font:inherit;text-align:center;padding:6px 2px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 table.bls td.c button{min-width:46px;min-height:38px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);font:inherit;color:inherit}
 .blsnote{font-size:13px;color:var(--muted)}
+.steps{display:grid;gap:10px;margin-bottom:14px}
+.step{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.step .num{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:900;background:var(--bg);color:var(--muted)}
+.step.done .num{background:var(--ok);color:#fff}.step.cur{border-color:var(--accent)}.step.cur .num{background:var(--accent);color:#fff}
+.step b{font-size:18px;display:block}.step small{color:var(--muted);font-size:14px}
+.pbar{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 10px;display:grid;gap:6px}
+.pbar .progress{height:10px}
+.pcard{display:grid;gap:8px;background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;border-left-width:6px}
+.pcard.ok{border-left-color:var(--ok)}.pcard.part{border-left-color:#E8590C}.pcard.no{border-left-color:var(--crit,#C92A2A)}.pcard.skip,.pcard.opt{border-left-color:var(--line)}
+.pcard .hd{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.pcard .hd b{font-size:17px;line-height:1.25}.pcard .off{display:block;font-size:13px;color:var(--muted);font-weight:500}
+.pcard .st{font-size:14px;font-weight:700;white-space:nowrap}
+.pcard.ok .st{color:var(--ok)}.pcard.part .st{color:#E8590C}.pcard.no .st{color:var(--crit,#C92A2A)}.pcard.skip .st,.pcard.opt .st{color:var(--muted)}
+.ploc{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:var(--bg);border-radius:10px;padding:6px 8px 6px 12px}
+.ploc span{font-size:15px;min-width:0;overflow-wrap:anywhere}
+.ploc input{width:64px;text-align:center}
+.ploc .x{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel);font-size:18px;color:var(--crit,#C92A2A)}
+.pacts{display:flex;flex-wrap:wrap;gap:8px}
+.cpick{display:grid;gap:6px;background:var(--bg);border-radius:12px;padding:10px}
+.cpick button{text-align:left;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font-size:15px}
+.cpick button.d1{margin-left:18px}.cpick button.d2{margin-left:36px}.cpick button.d3{margin-left:54px}
+.cpick button small{color:var(--muted);font-size:12px;margin-left:6px}
+.aliasrow{display:flex;gap:8px;align-items:center}
+.aliasrow input{flex:1}
 table.bls td.c.auto{position:relative}
 table.bls td.c.auto:after{content:'';position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.55}
 table.bls td.c .autolbl{display:block;font-size:11px;font-weight:600;font-family:var(--f-body);opacity:.8}
@@ -689,7 +713,12 @@ function homeTiles(){
   return '<div class="homeh"><span class="lbl">'+(u?'What do you need on '+esc(u.name)+'?':'Menu')+'</span></div><div class="hometiles">'+tiles+'</div>';
 }
 const BLS=[{"g":"Airway and suction","items":[["proto","Statewide EMS Protocols, current (digital OK if it stays in vehicle)",1,"yn"],["psuct","Portable suction unit (300 mmHg in 4 sec)",1],["scrig","Suction catheter, rigid, sterile",2],["sc6","Suction catheter 6 Fr, sterile",1],["sc8","Suction catheter 8 Fr, sterile",1],["sc10","Suction catheter 10 or 12 Fr, sterile",2],["sc14","Suction catheter 14 or 16 Fr, sterile",2],["opa0","OPA size 0",1],["opa1","OPA size 1",1],["opa2","OPA size 2",1],["opa3","OPA size 3",1],["opa4","OPA size 4",1],["opa5","OPA size 5",1],["npa16","NPA size 16",1],["npa24","NPA size 24",1],["npa26","NPA size 26",1],["npa32","NPA size 32",1],["npa34","NPA size 34",1],["lube","Lubricant, sterile water-soluble (2 cc+ tube)",2]]},{"g":"Oxygen and ventilation","items":[["o2wr","Non-sparking wrench / tank opener",1],["o2port","Portable O2, 300 L min. capacity, 500 PSI min.",1],["o2spare","Full spare O2 cylinder, 300 L",1],["o2sec","Portable O2 cylinders secured in vehicle",1,"yn"],["ncad","Nasal cannula, adult",1],["ncped","Nasal cannula, pediatric",1],["nrbad","High concentration mask, adult",1],["nrbped","High concentration mask, pediatric",1],["nrbinf","High concentration mask, infant",1],["humid","Humidifier bottle",1],["bvmad","BVM, adult (700 cc)",1],["bvmadm","BVM mask, adult",1],["bvmped","BVM, pediatric (450 cc)",1],["bvmch","BVM mask, child",1],["bvminf","BVM mask, infant",1],["bvmneo","BVM mask, neonatal",1]]},{"g":"Assessment","items":[["bpch","BP cuff, child",1],["bpad","BP cuff, adult",1],["bpth","BP cuff, thigh (large)",1],["stad","Stethoscope, adult",1],["stped","Stethoscope, pediatric (or double bell adult/peds)",1],["aed","AED (dual adult/peds OK)",1],["aedad","Defib pads, adult",1],["aedped","Defib pads, pediatric",1],["pen","Penlight",1],["therm","Thermometer, electronic, non-tympanic",1],["spo2","Pulse oximeter",1]]},{"g":"Bleeding, wounds and burns","items":[["multi","Multi-trauma dressing 10\" x 30\"",4],["occl","Occlusive dressing 3\" x 4\"",4],["g4x4","Sterile gauze pads 4\" x 4\"",25],["kerl","Soft self-adhering roller bandage (rolls)",6],["burn","Sterile burn sheet 4' x 4'",2],["tape","Adhesive tape, rolls (1 hypoallergenic)",4],["shear","Bandage shears",1],["tq","Commercial tactical tourniquet",2],["tri","Triangular bandage",8],["nss","Sterile water / normal saline (liters)",2]]},{"g":"Immobilization and moving","items":[["ked","Lateral c-spine device",1],["lsb","Long spine board",1],["ccs","Neck immobilizer, small (or multi-size)",1],["ccm","Neck immobilizer, medium (or multi-size)",1],["ccl","Neck immobilizer, large (or multi-size)",1],["ccp","Neck immobilizer, pediatric",1],["straps","Straps: 9' x5, OR spider + 9' x2, OR speed clips x4 + 9' x2",1,"yn"],["fold","Folding litter / collapsible device",1],["stair","Stair chair",1],["tsad","Traction splint, adult",1],["tsped","Traction splint, pediatric (or combination)",1],["spup","Upper extremity splint",2],["splo","Lower extremity splint",2],["pedtx","Pediatric safe transport device",1]]},{"g":"OB, comfort and linens","items":[["cold","Cold pack, chemical",4],["heat","Heat pack, chemical",4],["ob","Sterile OB kit",2],["bulb","Bulb syringe, sterile",1],["swad","Thermal blanket / silver swaddle / sterile foil",1],["pillow","Pillow",1],["blank","Blanket",2],["sheet","Sheet",4],["case","Pillow case",2],["towel","Towel",4],["tiss","Disposable tissues (box)",1],["emesis","Emesis container",1],["bedpan","Bedpan",1],["urinal","Urinal",1],["cups","Paper drinking cups, 3 oz",4],["jump","Emergency jump kit",1]]},{"g":"Medications and supplies","items":[["asa","Aspirin, oral",1,"yn"],["gluc","Instant glucose 45 g (or food-grade substitute)",1],["alc","Alcohol prep pads",10],["hand","Hand light",2],["flare","Road hazard warning device (flares, triangles)",3],["triage","Regional triage tags",20],["erg","Emergency Response Guidebook, current",1,"yn"],["redbag","Red bags (per infection control plan)",1,"yn"],["handsan","Hand sanitizer, waterless (container)",1]]},{"g":"PPE (1 per crew member)","note":"Required count assumes a crew of 2.","items":[["ppehelm","Helmet",2],["ppeeye","Eye protection (safety)",2],["ppeglove","Work gloves",2],["ppevest","High visibility safety apparel",2],["iceye","Eye protection, clear disposable",2],["icgown","Gown / coat",2],["iccap","Surgical cap / foot covers",2],["icexam","Exam gloves",2],["icn95","N-95 respirator",2]]},{"g":"Optional BLS (per PA protocols)","opt":true,"items":[["o12","12-lead monitor with transmit",0],["ochar","Activated charcoal",0],["ocpap","CPAP with 2 disposable masks",0],["oco","CO monitor",0],["oglu","Electronic glucose meter",0],["oepiA","Epi auto-injector, adult",0],["oepiP","Epi auto-injector, pediatric",0],["oepiK","\"Check and Inject\" kit",0],["oglcg","Glucagon nasal / auto-injector",0],["ohemo","Hemostatic agent",0],["onarc","Naloxone, intranasal / auto-injector",0],["oneb","Nebulized bronchodilator",0]]},{"g":"IALS: airway, breathing and glucose","lvl":"IALS","items":[["idose","Pediatric dosing / sizing tape, current",1],["icpap","CPAP, portable, with 2 disposable masks",1,"yn"],["iair3","Rescue airway size 3 (King LT or i-gel)",1],["iair4","Rescue airway size 4 (King LT or i-gel)",1],["iair5","Rescue airway size 5 (King LT or i-gel)",1],["ineb","Nebulizer system",1],["iglm","Electronic glucose meter",1]]},{"g":"IALS: IV and IO","lvl":"IALS","items":[["iv14","IV catheter 14 ga",4],["iv16","IV catheter 16 ga",4],["iv18","IV catheter 18 ga",4],["iv20","IV catheter 20 ga",4],["iv22","IV catheter 22 ga",4],["iv24","IV catheter 24 ga",2],["imacro","Macrodrip set (10-20 gtt/mL)",2],["ivtq","IV tourniquet",2],["ivsol","IV solution, 1000 mL bag (2,000 mL total)",2],["ndl16","Hypodermic needle 16-18 ga",4],["ndl20","Hypodermic needle 20-22 ga",4],["ndl23","Hypodermic needle 23-25 ga",4],["isyr","Syringe (at least one 1 mL)",2],["ioped","IO needle, pediatric",1],["ioad","IO needle, adult",1],["iolg","IO needle, large adult",1]]},{"g":"IALS: medications","lvl":"IALS","items":[["ibron","Bronchodilator (albuterol, albuterol/ipratropium or levalbuterol)",1,"yn"],["idex","Dextrose (10% to 50%)",1,"yn"],["iepi","EPINEPHrine 1 mg vial or ampule",1,"yn"],["inarc","Naloxone",1,"yn"],["intg","Nitroglycerin, sublingual",1,"yn"]]},{"g":"IALS: monitor","lvl":"IALS","items":[["imon","Defib / monitor, 12-lead, transmit and printout",1],["imonad","Monitor defib pads, adult",1],["imonped","Monitor defib pads, pediatric",1],["iecgad","ECG electrodes, adult",12],["iecgped","ECG electrodes, pediatric",12],["ietco2","Waveform capnography (incl. intubated patient)",1,"yn"]]},{"g":"Optional IALS medications (per PA protocols)","lvl":"IALS","opt":true,"items":[["oapap","Acetaminophen",0],["odiph","DiphenhydrAMINE",0],["oepi01","EPINEPHrine 0.1 mg vial or ampule",0],["oglucg","Glucagon",0],["oibu","Ibuprofen",0],["oketo","Ketorolac",0],["omethyl","methylPREDNISolone",0],["on2o","Nitrous oxide",0],["oondan","Ondansetron (Zofran)",0]]}];
-const blsAll=()=>BLS.flatMap(g=>g.items.map(it=>({id:it[0],name:it[1],req:it[2],yn:it[3]==='yn',opt:!!g.opt,g:g.g,lvl:g.lvl||'BLS'})));
+const aliasMap=()=>(D['meta/alias']&&D['meta/alias'].a)||{};
+const customReq=()=>(D['meta/customreq']&&D['meta/customreq'].items)||[];
+const reqDisp=(id,name)=>{ const a=aliasMap()[id]; return a?a+' ('+name+')':name; };
+function reqGroups(){ const base=BLS.concat(customReq().length?[{g:'Our agency\'s items',custom:true,items:customReq().map(c=>[c.id,c.name,+c.req||0,c.yn?'yn':''])}]:[]);
+  return base.map(g=>Object.assign({},g,{items:g.items.map(it=>[it[0],reqDisp(it[0],it[1]),it[2],it[3],it[1]])})); }
+const blsAll=()=>reqGroups().flatMap(g=>g.items.map(it=>({id:it[0],name:it[1],official:it[4],req:it[2],yn:it[3]==='yn',opt:!!g.opt,g:g.g,lvl:g.lvl||'BLS',custom:!!g.custom})));
 const blsDoc=tid=>D['bls/'+tid]||{c:{}};
 const reqById=id=>blsAll().find(x=>x.id===id);
 const reqLinked=(tid,rid)=>allNodes().filter(n=>n.truck===tid&&n.kind==='item'&&n.req===rid);
@@ -712,7 +741,7 @@ function blsView(){
     const txt=v==null?'–':it.yn?(v>=1?'✓':'✗'):String(v);
     return '<td class="c '+(st==='info'?'':st)+(au!=null?' auto':'')+'">'+txt+'</td>'; };
   let rows='';
-  BLS.forEach(g=>{ const its=g.items.map(it=>({id:it[0],name:it[1],req:it[2],yn:it[3]==='yn',opt:!!g.opt,lvl:g.lvl||'BLS'})).filter(it=>!only||T.some(t=>blsState(t.id,it)==='short'));
+  reqGroups().forEach(g=>{ const its=g.items.map(it=>({id:it[0],name:it[1],req:it[2],yn:it[3]==='yn',opt:!!g.opt,lvl:g.lvl||'BLS'})).filter(it=>!only||T.some(t=>blsState(t.id,it)==='short'));
     if(!its.length) return;
     rows+='<tr class="grp"><td colspan="'+(T.length+2)+'">'+esc(g.g)+(g.note?' <span style="text-transform:none;letter-spacing:0;font-weight:500">· '+esc(g.note)+'</span>':'')+'</td></tr>'+
       its.map(it=>'<tr><td class="eq">'+esc(it.name)+'</td><td class="req">'+(it.opt?'Opt':it.yn?'Yes':it.req)+'</td>'+T.map(t=>cell(t,it)).join('')+'</tr>').join(''); });
@@ -729,7 +758,7 @@ function reqPickView(){
   const n=node(V.nid); if(!n) return homeView(); const tid=n.truck; const all=V.reqAll; const sel=V.reqSel||{};
   const filt=(V.reqQ||'').trim().toLowerCase();
   let html='';
-  BLS.forEach(g=>{ const its=g.items.map(a=>reqById(a[0])).filter(it=>{ const pl=reqPlacedQty(tid,it); if(!all&&(it.opt?pl>0:pl>=Math.max(1,it.req))) return false; return !filt||it.name.toLowerCase().includes(filt); });
+  reqGroups().forEach(g=>{ const its=g.items.map(a=>reqById(a[0])).filter(it=>{ const pl=reqPlacedQty(tid,it); if(!all&&(it.opt?pl>0:pl>=Math.max(1,it.req))) return false; return !filt||it.name.toLowerCase().includes(filt); });
     if(!its.length) return;
     html+='<div class="reqgrp">'+esc(g.g)+'</div><div class="stack" style="gap:6px">'+its.map(it=>{ const on=!!sel[it.id]; const left=Math.max(1,(it.req||1)-reqPlacedQty(tid,it));
       return '<div class="reqrow'+(on?' on':'')+'"><button class="box" data-act="reqtog" data-r="'+it.id+'" aria-pressed="'+on+'" aria-label="Select '+esc(it.name)+'">'+(on?'✓':'')+'</button><button data-act="reqtog" data-r="'+it.id+'" style="border:0;background:none;text-align:left;padding:0;color:inherit"><b>'+esc(it.name)+'</b><small>'+reqItemLine(tid,it)+'</small></button>'+
@@ -747,7 +776,7 @@ function reqTruckView(){
   const done=req.filter(it=>reqPlacedQty(t.id,it)>=Math.max(1,it.req)).length;
   const mode=V.reqTMode||'';
   let html='';
-  BLS.forEach(g=>{ const its=g.items.map(a=>reqById(a[0])).filter(it=>{ const pl=reqPlacedQty(t.id,it); if(mode==='no') return !it.opt&&pl<Math.max(1,it.req); return true; });
+  reqGroups().forEach(g=>{ const its=g.items.map(a=>reqById(a[0])).filter(it=>{ const pl=reqPlacedQty(t.id,it); if(mode==='no') return !it.opt&&pl<Math.max(1,it.req); return true; });
     if(!its.length) return;
     html+='<div class="reqgrp">'+esc(g.g)+'</div><div class="stack" style="gap:6px">'+its.map(it=>{ const Lk=reqLinked(t.id,it.id); const pl=reqPlacedQty(t.id,it);
       const cls=it.opt?'opt':pl>=Math.max(1,it.req)?'ok':pl>0?'part':'no';
@@ -756,6 +785,45 @@ function reqTruckView(){
   return topbar('Required list · '+t.name,'Setup')+'<div class="stack" style="max-width:760px"><p class="hint" style="margin:0"><b>'+done+' of '+req.length+'</b> required items are placed on '+esc(t.name)+'. To place one, open a compartment or bag in setup and tap <b>Add from required list</b>. To count an item you already have, tap <b>Required list</b> under that item and pick what it is.</p>'+
     '<div class="seg2" role="group"><button data-act="reqtmode" data-v="no" aria-pressed="'+(mode==='no')+'">Not placed</button><button data-act="reqtmode" data-v="" aria-pressed="'+(mode!=='no')+'">Everything</button></div>'+html+'</div>';
 }
+function containersOf(tid){ const out=[]; const walk=(id,d)=>{ kidsOf(id).filter(k=>k.kind!=='item').forEach(k=>{ out.push({n:k,d}); walk(k.id,d+1); }); };
+  topComps(tid).forEach(c=>{ out.push({n:c,d:0}); walk(c.id,1); }); return out; }
+const reqSkipped=(tid,rid)=>!!((blsDoc(tid).skip||{})[rid]);
+function reqStatus(tid,it){ const pl=reqPlacedQty(tid,it); const has=reqLinked(tid,it.id).length;
+  if(reqSkipped(tid,it.id)&&!has) return 'skip'; if(it.opt) return has?'ok':'opt'; if(!has) return 'no'; return pl>=Math.max(1,it.req)?'ok':'part'; }
+function placeView(){
+  const t=truck(V.tid); if(!t) return homeView(); const C=containersOf(t.id); const L=blsAll();
+  const resolved=it=>{ const st=reqStatus(t.id,it); return st==='ok'||st==='skip'||(st==='opt'&&reqSkipped(t.id,it.id)); };
+  const need=L.filter(it=>!it.opt); const doneN=need.filter(it=>reqStatus(t.id,it)==='ok'||reqStatus(t.id,it)==='skip').length;
+  const optLeft=L.filter(it=>it.opt&&!resolved(it)).length;
+  const mode=V.placeMode||'todo'; const filt=(V.reqQ||'').trim().toLowerCase();
+  if(!C.length) return topbar('Place the list · '+t.name,'Setup')+'<div class="card empty"><b>Set up compartments first.</b><span class="muted">Step 1 is adding the compartments and bags on '+esc(t.name)+'. Then come back here and put every item on the list in its place.</span><button class="btn primary" data-act="back">Go to step 1</button></div>';
+  const card=it=>{ const st=reqStatus(t.id,it); const Lk=reqLinked(t.id,it.id); const pl=reqPlacedQty(t.id,it); const open=V.placeFor===it.id;
+    const stTxt=st==='skip'?'Not carried':st==='opt'?'Optional':it.yn?(Lk.length?'Placed':'No location'):(pl+' of '+it.req+(st==='part'?' · '+(it.req-pl)+' short':''));
+    const a=aliasMap()[it.id];
+    return '<div class="pcard '+st+'" id="pc-'+it.id+'"><div class="hd"><b>'+esc(a||it.official||it.name)+(a?'<span class="off">'+esc(it.official)+'</span>':'')+'</b><span class="st">'+(it.opt&&st!=='skip'&&st!=='opt'?'Optional · ':'')+stTxt+'</span></div>'+
+      (!it.opt&&!it.yn?'<span class="muted" style="font-size:14px">Required on the truck: <b>'+it.req+'</b></span>':it.yn&&!it.opt?'<span class="muted" style="font-size:14px">Required: yes (pass/fail)</span>':'')+
+      Lk.map(n=>'<div class="ploc"><span>'+esc(fullPath(n.parent).replace(t.name+' › ',''))+'</span>'+(n.type==='count'?'<input id="pq_'+n.id+'" class="sinp" type="number" min="0" inputmode="numeric" data-chg="par" data-n="'+esc(n.id)+'" value="'+(+n.par||0)+'" aria-label="How many in '+esc(fullPath(n.parent))+'">':'<span class="muted" style="font-size:13px">✓</span>')+'<button class="x" data-act="plocdel" data-n="'+esc(n.id)+'" aria-label="Remove from '+esc(fullPath(n.parent))+'">'+(V.arm==='pl'+n.id?'?':'×')+'</button></div>').join('')+
+      (open?'<div class="cpick"><span class="lbl">Where is it? Tap a compartment or bag</span>'+C.map(c=>'<button class="d'+Math.min(3,c.d)+'" data-act="plocadd" data-c="'+esc(c.n.id)+'" data-r="'+it.id+'">'+esc((c.n.code?c.n.code+' ':'')+c.n.name)+'<small>'+esc(c.d?(c.n.label||'Bag'):LOC_NAME[c.n.loc]||'')+'</small></button>').join('')+'<button data-act="placefor" data-r="" style="text-align:center;color:var(--muted)">Cancel</button></div>':'')+
+      '<div class="pacts">'+(open?'':'<button class="btn small primary" data-act="placefor" data-r="'+it.id+'">+ '+(Lk.length?'Another location':'Add location')+'</button>')+
+      (Lk.length?'':'<button class="btn small" data-act="placeskip" data-r="'+it.id+'">'+(reqSkipped(t.id,it.id)?'Undo not carried':'Not carried')+'</button>')+
+      '<button class="btn small" data-act="aliasedit" data-r="'+it.id+'">'+(a?'Nickname: '+esc(a):'+ Nickname')+'</button>'+
+      (it.custom?'<button class="btn small danger" data-act="customdel" data-r="'+it.id+'">'+(V.arm==='cd'+it.id?'Tap again to delete':'Delete from list')+'</button>':'')+'</div>'+
+      (V.aliasFor===it.id?'<div class="aliasrow"><input id="aliasin" class="sinp" placeholder="e.g. Tylenol" value="'+esc(a||'')+'" autocomplete="off"><button class="btn small primary" data-act="aliassave" data-r="'+it.id+'">Save</button></div><span class="hint">The nickname shows first everywhere, with the official name after it, and works in search. It applies to every truck.</span>':'')+'</div>'; };
+  let html=''; let shown=0;
+  reqGroups().forEach(g=>{ const its=g.items.map(a=>reqById(a[0])).filter(it=>{ if(filt&&!(it.name.toLowerCase().includes(filt))) return false; if(mode==='todo') return !resolved(it)||V.placeFor===it.id||V.aliasFor===it.id||V.keepShown===it.id; return true; });
+    if(!its.length) return; shown+=its.length;
+    html+='<div class="reqgrp">'+esc(g.g)+'</div><div class="stack" style="gap:8px">'+its.map(card).join('')+'</div>'; });
+  const pct=need.length?Math.round(doneN/need.length*100):100;
+  const endMsg= doneN===need.length&&!optLeft?'<div class="card summary st-ok"><b>Every item on the list has a location.</b><span class="muted">'+esc(t.name)+' is ready for rig checks. Exit setup when you are done.</span></div>':
+    (doneN===need.length?'<div class="card summary st-ok"><b>All required items have a location.</b><span class="muted">'+optLeft+' optional item'+(optLeft===1?'':'s')+' left: give each a location, or tap Not carried.</span></div>':'');
+  return topbar('Place the list · '+t.name,'Setup')+(doneN===need.length&&mode==='todo'?'<div class="banner" style="margin-bottom:8px">All required items are placed. What is left below is optional.</div>':'')+
+    '<div class="pbar"><div class="row between"><b>'+doneN+' of '+need.length+' required items placed</b><span class="muted">'+pct+'%</span></div><div class="progress"><i class="p" style="width:'+pct+'%"></i></div>'+
+    '<div class="row"><div class="seg2" role="group"><button data-act="placemode" data-v="todo" aria-pressed="'+(mode==='todo')+'">Still to place</button><button data-act="placemode" data-v="all" aria-pressed="'+(mode==='all')+'">Whole list</button></div></div>'+
+    '<div class="search">'+ico('search')+'<input id="reqq" data-inp="reqq" value="'+esc(V.reqQ||'')+'" placeholder="Find on the list (name or nickname)…" autocomplete="off"></div></div>'+
+    '<p class="hint" style="margin:0 0 6px">Go down the list. For each item tap <b>Add location</b>, pick the compartment or bag, and type how many are there. Add more locations if it is split up. Items you place drop off "Still to place".</p>'+
+    html+endMsg+
+    '<div class="card stack" style="margin-top:16px"><b>Add an item that is not on the state list</b><div class="row"><input id="cname" class="sinp" placeholder="Name, e.g. Trauma shears, spare" style="flex:1;min-width:170px"><input id="creq" class="sinp" type="number" min="0" inputmode="numeric" value="1" style="width:80px" aria-label="How many required"><button class="btn small primary" data-act="customadd">Add to list</button></div><span class="hint">It is added to the list for every truck, under "Our agency\'s items".</span></div>';
+}
 function reqLinkView(){
   const n=node(V.linkId); if(!n) return homeView(); const filt=(V.reqQ||'').trim().toLowerCase(); const tid=n.truck;
   const words=String(n.name||'').toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>2);
@@ -763,7 +831,7 @@ function reqLinkView(){
   const L=blsAll().filter(it=>!filt||it.name.toLowerCase().includes(filt));
   const sug=filt?[]:L.filter(it=>score(it)>0).sort((a,b)=>score(b)-score(a)).slice(0,5);
   const row=it=>'<button class="reqrow'+(n.req===it.id?' on':'')+'" data-act="reqlinkset" data-r="'+it.id+'"><span class="box">'+(n.req===it.id?'✓':'')+'</span><span><b>'+esc(it.name)+'</b><small>'+esc(it.g)+' · '+reqItemLine(tid,it)+'</small></span><span></span></button>';
-  let html=''; BLS.forEach(g=>{ const its=L.filter(it=>it.g===g.g); if(its.length) html+='<div class="reqgrp">'+esc(g.g)+'</div><div class="stack" style="gap:6px">'+its.map(row).join('')+'</div>'; });
+  let html=''; reqGroups().forEach(g=>{ const its=L.filter(it=>it.g===g.g); if(its.length) html+='<div class="reqgrp">'+esc(g.g)+'</div><div class="stack" style="gap:6px">'+its.map(row).join('')+'</div>'; });
   return topbar('What is "'+n.name+'"?',n.parent?(node(n.parent)||{}).name||'Back':'Back')+'<div class="stack" style="max-width:760px"><p class="hint" style="margin:0">Pick the line on the required list this item counts toward. Its "should have" number then counts toward that line for '+esc((truck(tid)||{}).name||'')+'.</p>'+
     (n.req?'<button class="btn" data-act="reqlinkset" data-r="">Not on the required list</button>':'')+
     '<div class="search">'+ico('search')+'<input id="reqq" data-inp="reqq" value="'+esc(V.reqQ||'')+'" placeholder="Find on the list…" autocomplete="off"></div>'+
@@ -886,7 +954,8 @@ function summaryHTML(tid){
 }
 function truckView(){
   const t=truck(V.tid); if(!t) return homeView();
-  if(V.setup){ const rq=blsAll().filter(x=>!x.opt); const dn=rq.filter(it=>reqPlacedQty(t.id,it)>=Math.max(1,it.req)).length; return topbar(t.name,'Setup')+'<p class="hint" style="margin:0 0 12px">Tap a compartment to set it up, or add a new one. Its spot on the layout comes from where you say it is.</p>'+'<div class="card rscard" style="margin-bottom:14px"><div><b>Required list (BLS + IALS)</b><br><span class="muted" style="font-size:15px">'+dn+' of '+rq.length+' required items placed on '+esc(t.name)+'</span></div><button class="btn" data-act="reqtruck">See list</button></div>'+truckBody(t); }
+  if(V.setup){ const rq=blsAll().filter(x=>!x.opt); const dn=rq.filter(it=>reqPlacedQty(t.id,it)>=Math.max(1,it.req)).length; return topbar(t.name,'Setup')+'<p class="hint" style="margin:0 0 12px">Tap a compartment to set it up, or add a new one. Its spot on the layout comes from where you say it is.</p>'+(()=>{ const nC=containersOf(t.id).length; return '<div class="steps"><div class="step '+(nC?'done':'cur')+'"><span class="num">'+(nC?'✓':'1')+'</span><span><b>Compartments and bags</b><small>'+(nC?nC+' set up below. Add more any time.':'Add each compartment, then the bags inside it.')+'</small></span><span></span></div>'+
+      '<div class="step '+(dn===rq.length?'done':nC?'cur':'')+'"><span class="num">'+(dn===rq.length?'✓':'2')+'</span><span><b>Place the list (BLS + IALS)</b><small>'+dn+' of '+rq.length+' required items placed</small></span><button class="btn small '+(nC?'primary':'')+'" data-act="reqtruck">'+(dn?'Continue':'Start')+'</button></div></div>'; })()+truckBody(t); }
   const rx=rsOn(t.id);
   if(rx) return topbar(t.name,'Home')+'<p class="hint" style="margin:0 0 12px">Find what you used: search for it, or open the compartment and bag. Tap <b>+ Restock</b> on each item.</p>'+truckBody(t)+rsBasket(rx);
   return topbar('Rig check · '+t.name,'Home')+checkCard(t.id)+truckBody(t);
@@ -1067,9 +1136,9 @@ function render(){
   if(!LOCAL&&!tok()){ document.getElementById('app').innerHTML=signinView(); const el=document.getElementById(V.needName?'siname':'sicode'); if(el&&document.activeElement!==el&&!V.siFocused){ V.siFocused=1; } return; }
   if(!loaded||drag) return;
   const ae=document.activeElement, fid=ae&&ae.id; let ss=null,se=null; try{ ss=ae.selectionStart; se=ae.selectionEnd; }catch(e){}
-  const keep={}; if(fid&&ae.dataset&&ae.dataset.chg==='bls') keep[fid]=ae.value; document.querySelectorAll('[data-keep]').forEach(el=>{ if(el.id) keep[el.id]=el.value; }); ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew','rsnew','rsrun','pname','prole','sicode','siname'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
+  const keep={}; if(fid&&ae.dataset&&ae.dataset.chg==='bls') keep[fid]=ae.value; document.querySelectorAll('[data-keep]').forEach(el=>{ if(el.id) keep[el.id]=el.value; }); ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew','rsnew','rsrun','pname','prole','sicode','siname','cname','creq','aliasin'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
   const od=[...document.querySelectorAll('details[id][open]')].map(d=>d.id);
-  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='access'?accessView(): V.screen==='reports'?reportsView(): V.screen==='bls'?blsView(): V.screen==='reqpick'?reqPickView(): V.screen==='reqtruck'?reqTruckView(): V.screen==='reqlink'?reqLinkView(): V.screen==='restock'?restockHub(): V.screen==='history'?historyPage(): V.screen==='rsreview'?rsReviewView(): homeView();
+  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='access'?accessView(): V.screen==='reports'?reportsView(): V.screen==='bls'?blsView(): V.screen==='reqpick'?reqPickView(): V.screen==='reqtruck'?placeView(): V.screen==='reqlink'?reqLinkView(): V.screen==='restock'?restockHub(): V.screen==='history'?historyPage(): V.screen==='rsreview'?rsReviewView(): homeView();
   document.getElementById('app').innerHTML=html;
   Object.entries(keep).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
   od.forEach(id=>{ const d=document.getElementById(id); if(d) d.open=true; });
@@ -1097,9 +1166,28 @@ const A={
   reqtog:b=>{ V.reqSel=V.reqSel||{}; const id=b.dataset.r; if(V.reqSel[id]) delete V.reqSel[id]; else V.reqSel[id]=1; },
   reqadd:()=>{ const p=node(V.nid); if(!p) return false; const ids=Object.keys(V.reqSel||{}); if(!ids.length) return false; let ord=nextOrder(p.id,p.truck); const ops=[]; const names=[];
     ids.forEach(rid=>{ const it=reqById(rid); if(!it) return; const el=document.getElementById('rq_'+rid); const qty=it.yn?0:Math.max(0,parseInt(el&&el.value)||Math.max(1,it.req)); const id='n'+uid();
-      ops.push(['nodes/'+id,{truck:p.truck,parent:p.id,name:it.name,order:ord++,kind:'item',type:it.yn?'check':'count',par:qty,critical:false,req:rid}]); names.push(it.name+(it.yn?'':' ('+qty+')')); });
+      ops.push(['nodes/'+id,{truck:p.truck,parent:p.id,name:it.name,order:ord++,kind:'item',type:it.yn?'check':'count',par:qty,critical:false,req:rid,fromList:true}]); names.push(it.name+(it.yn?'':' ('+qty+')')); });
     persistMany(ops); logChange(p.truck,'Added from the required list to '+fullPath(p.id)+': '+names.join(', ')); toast(ids.length+' item'+(ids.length===1?'':'s')+' added to '+p.name); V.reqSel={}; openNode(p.id); return false; },
-  reqtruck:()=>{ V.reqTMode='no'; go('reqtruck'); return false; },
+  reqtruck:()=>{ V.placeMode='todo'; V.placeFor=null; V.aliasFor=null; V.reqQ=''; go('reqtruck'); return false; },
+  placemode:b=>{ V.placeMode=b.dataset.v; V.keepShown=null; },
+  placefor:b=>{ V.placeFor=b.dataset.r||null; V.aliasFor=null; },
+  plocadd:b=>{ const c=node(b.dataset.c); const it=reqById(b.dataset.r); if(!c||!it) return false; const left=Math.max(1,(it.req||1)-reqPlacedQty(c.truck,it)); const id='n'+uid();
+    const o={truck:c.truck,parent:c.id,name:it.name,order:nextOrder(c.id,c.truck),kind:'item',type:it.yn?'check':'count',par:it.yn?0:left,critical:false,req:it.id,fromList:true};
+    persist('nodes/'+id,o); const d=clone(blsDoc(c.truck)); if(d.skip&&d.skip[it.id]){ delete d.skip[it.id]; persist('bls/'+c.truck,d); }
+    logChange(c.truck,'Placed '+it.name+(it.yn?'':' ('+left+')')+' in '+fullPath(c.id)); V.placeFor=null; V.keepShown=it.id; render();
+    if(!it.yn) setTimeout(()=>{ const el=document.getElementById('pq_'+id); if(el){ el.focus(); el.select(); } },30); return false; },
+  plocdel:b=>{ const id=b.dataset.n; if(V.arm!=='pl'+id){ V.arm='pl'+id; return; } V.arm=null; const n=node(id); if(!n) return; V.keepShown=n.req; logChange(n.truck,'Removed '+n.name+' from '+fullPath(n.parent)); deleteNode(id); },
+  placeskip:b=>{ const tid=V.tid; const d=clone(blsDoc(tid)); d.skip=d.skip||{}; const it=reqById(b.dataset.r); if(d.skip[b.dataset.r]) delete d.skip[b.dataset.r]; else d.skip[b.dataset.r]=1; d.t=Date.now(); d.by=me(); persist('bls/'+tid,d); logChange(tid,(d.skip[b.dataset.r]?'Marked as not carried: ':'Undid not carried: ')+(it?it.name:'')); },
+  aliasedit:b=>{ V.aliasFor=V.aliasFor===b.dataset.r?null:b.dataset.r; V.placeFor=null; if(V.aliasFor) setTimeout(()=>{ const el=document.getElementById('aliasin'); if(el) el.focus(); },30); },
+  aliassave:b=>{ const rid=b.dataset.r; const el=document.getElementById('aliasin'); const v=(el?el.value:'').trim().slice(0,40); const A=Object.assign({},aliasMap()); const before=A[rid]||''; if(v) A[rid]=v; else delete A[rid];
+    persist('meta/alias',{a:A}); const it=reqById(rid);
+    allNodes().filter(n=>n.req===rid&&n.fromList).forEach(n=>{ if(n.name!==it.name){ n.name=it.name; saveNode(n); } });
+    if(before!==v) logChange('',v?'Nickname for "'+it.official+'" set to "'+v+'"':'Removed nickname for "'+it.official+'"'); V.aliasFor=null; V.keepShown=rid; toast(v?'Nickname saved':'Nickname removed'); },
+  customadd:()=>{ const n=document.getElementById('cname').value.trim(); const q=Math.max(0,parseInt(document.getElementById('creq').value)||0); if(!n){ toast('Type a name first.'); return false; }
+    const L=customReq().slice(); const id='c'+uid(); L.push({id,name:n.slice(0,80),req:q}); persist('meta/customreq',{items:L}); logChange('','Added "'+n+'" to the agency list (required '+q+')');
+    document.getElementById('cname').value=''; V.placeFor=id; V.keepShown=id; render(); setTimeout(()=>{ const el=document.getElementById('pc-'+id); if(el) el.scrollIntoView({block:'center'}); },30); return false; },
+  customdel:b=>{ const id=b.dataset.r; if(V.arm!=='cd'+id){ V.arm='cd'+id; return; } V.arm=null; const it=reqById(id); persist('meta/customreq',{items:customReq().filter(c=>c.id!==id)});
+    allNodes().filter(n=>n.req===id).forEach(n=>{ const o=clone(n); delete o.req; saveNode(o); }); logChange('','Deleted "'+(it?it.official:'')+'" from the agency list'); },
   reqtmode:b=>{ V.reqTMode=b.dataset.v; },
   reqlink:b=>{ V.reqQ=''; go('reqlink',{linkId:b.dataset.n}); return false; },
   reqlinkset:b=>{ const n=node(V.linkId); if(!n) return false; const rid=b.dataset.r||''; const it=reqById(rid); const before=n.req||''; if(rid) n.req=rid; else delete n.req;
@@ -1175,7 +1263,7 @@ const A={
     else { const k=checksOf(x.tid)[0]; if(k){ const rc=clone(k); const kid=rc.id; delete rc.id; let ch=false; (rc.failed||[]).forEach(f=>{ const hit=items.find(it=>it.node===f.node); if(hit&&!f.restocked){ f.restocked=true; ch=true; rc.restocked=(rc.restocked||[]).concat([{node:f.node,name:f.name,path:f.path,qty:hit.qty,t:now,by,run:x.run||''}]); } }); if(ch) persist('checks/'+kid,rc); } }
     setRS(null); toast('Restock saved: '+items.reduce((a,b)=>a+b.qty,0)+' items'); go('truck',{tid:x.tid,tab:'history'}); return false; },
   setme:b=>{ setMe(b.dataset.v); toast('This phone is now '+b.dataset.v); },
-  back:()=>{ const s=V.screen; if(s==='bls'){ blsLog(); V.blsEdit=false; } if(s==='reqpick'){ openNode(V.nid); return false; } if(s==='reqlink'){ const n=node(V.linkId); V.linkId=null; if(n) openNode(n.id); else go('truck'); return false; } if(s==='reqtruck'){ go('truck'); return false; } if(['log','crew','restock','history','bls'].includes(s)&&V.backTo==='reports'){ V.backTo=''; go('reports'); return false; } if(['pin','roster','log','trucks','gate','crew','access','reports','restock','history','bls'].includes(s)){ V.backTo=''; go('home'); return false; } if(s==='rsstart'){ go('restock'); return false; } if(s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
+  back:()=>{ const s=V.screen; if(s==='bls'){ blsLog(); V.blsEdit=false; } if(s==='reqpick'){ openNode(V.nid); return false; } if(s==='reqlink'){ const n=node(V.linkId); V.linkId=null; if(n) openNode(n.id); else go('truck'); return false; } if(s==='reqtruck'){ V.placeFor=null; V.aliasFor=null; go('truck'); return false; } if(['log','crew','restock','history','bls'].includes(s)&&V.backTo==='reports'){ V.backTo=''; go('reports'); return false; } if(['pin','roster','log','trucks','gate','crew','access','reports','restock','history','bls'].includes(s)){ V.backTo=''; go('home'); return false; } if(s==='rsstart'){ go('restock'); return false; } if(s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
   open:b=>{ openNode(b.dataset.n); return false; },
   tab:b=>{ V.tab=b.dataset.v; V.finishArm=false; },
   clearq:()=>{ V.q=''; render(); const el=document.getElementById('q'); if(el) el.focus(); return false; },
@@ -1242,8 +1330,8 @@ const A={
   install:()=>{ if(installEvt){ installEvt.prompt(); installEvt=null; } },
   hideinstall:()=>{ ls.set('rc3-hideinstall',true); }
 };
-const ARMED=['del','discard','tdel','photodel','rscancel','accremove','accrevoke','signout'];
-const SETUP_ONLY=['reqpick','reqadd','reqlink','reqlinkset','reqtruck','addcomp','savecomp','addchild','up','del','move','moveto','photo','photodel','spotsel','spotdel','spotnew','tmove','tdel','tadd','manage','pinpage','savepin','rosterpage','rosteradd','rosterdel'];
+const ARMED=['plocdel','customdel','del','discard','tdel','photodel','rscancel','accremove','accrevoke','signout'];
+const SETUP_ONLY=['placefor','plocadd','plocdel','placeskip','aliasedit','aliassave','customadd','customdel','reqpick','reqadd','reqlink','reqlinkset','reqtruck','addcomp','savecomp','addchild','up','del','move','moveto','photo','photodel','spotsel','spotdel','spotnew','tmove','tdel','tadd','manage','pinpage','savepin','rosterpage','rosteradd','rosterdel'];
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
   const act=b.dataset.act; if(!ARMED.includes(act)&&act!=='rosterdel') V.arm=null; touchSetup();
