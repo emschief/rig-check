@@ -234,6 +234,12 @@ details.hist ul{margin:0;padding-left:20px}
 .trow .tp img,.trow .tp svg{width:100%;height:100%;object-fit:cover;display:block}
 .trow .tf{display:grid;gap:8px}
 .trow .ta{display:flex;gap:6px;flex-wrap:wrap}
+.sheetwrap{position:fixed;inset:0;background:rgba(10,18,32,.45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheetwrap[hidden]{display:none}
+.sheet{width:100%;max-width:520px;background:var(--panel);border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));display:grid;gap:10px}
+.sheet b{font-size:20px;text-align:center;margin-bottom:4px}
+.sheet .btn{min-height:58px;font-size:18px}
+.sheet .ghost{border-color:transparent;background:none;color:var(--muted)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;z-index:30;font-weight:700;max-width:calc(100% - 32px);text-align:center}
 .loading{text-align:center;padding:60px 10px;color:var(--muted)}
 .setupband{position:sticky;top:0;z-index:20;margin:0 calc(-1 * max(14px,env(safe-area-inset-left,0px)));padding:10px max(14px,env(safe-area-inset-left,0px));padding-top:calc(10px + env(safe-area-inset-top,0px));margin-top:calc(-1 * env(safe-area-inset-top,0px));
@@ -326,7 +332,8 @@ details.hist.rs{border-left-color:#0B7A6E}
 </style>
 </head><body>
 <div class="wrap" id="app"><div class="loading">Loading trucks…</div></div>
-<input type="file" id="photoin" accept="image/*" hidden>
+<input type="file" id="photoin" accept="image/*" hidden><input type="file" id="camin" accept="image/*" capture="environment" hidden>
+<div class="sheetwrap" id="photosheet" hidden><div class="sheet" role="dialog" aria-label="Add a photo"><b>Add a photo</b><button class="btn go wide" id="ps-cam">Take a photo</button><button class="btn wide" id="ps-lib">Choose from phone</button><button class="btn wide ghost" id="ps-x">Cancel</button></div></div>
 <div class="toast" id="toast" hidden></div>
 <script>
 const API_URL='https:'+'/'+'/script.google.com/macros/s/AKfycbxf3jjfUjNZJKJR47WteKyhSbAnGsWjP9fyCUMucq4T6ILNMpx5PrL71-5_7CKm2jeF/exec';
@@ -1076,7 +1083,7 @@ const A={
   copyneeds:()=>{ const t=truck(V.tid); const L=needsList(V.tid).filter(x=>!x.done); const txt=[t.name+' needed · '+new Date().toLocaleDateString()].concat(L.map(x=>'- '+x.name+(x.type==='count'?' × '+x.need:' (fix/replace)')+' ['+x.path+']')).join('\n');
     const box=document.getElementById('copybox'); const sel=()=>{ box.hidden=false; box.value=txt; box.select(); toast('Select and copy the list below'); };
     try{ navigator.clipboard.writeText(txt).then(()=>toast('List copied'),sel); }catch(e){ sel(); } return false; },
-  photo:b=>{ V.photoKey=b.dataset.k; document.getElementById('photoin').click(); return false; },
+  photo:b=>{ V.photoKey=b.dataset.k; document.getElementById('photosheet').hidden=false; return false; },
   photodel:()=>{ if(V.arm!=='photodel'){ V.arm='photodel'; return; } V.arm=null; const n=node(V.nid); if(n.photo) dropPhoto(n.photo.file); delete n.photo; n.spots=[]; saveNode(n); logChange(n.truck,'Removed the photo of '+fullPath(n.id)); },
   spotsel:b=>{ V.spotSel=b.dataset.s||null; },
   spotdel:b=>{ const n=node(V.nid); n.spots=(n.spots||[]).filter(x=>x.id!==b.dataset.s); saveNode(n); logChange(n.truck,'Deleted a box on the photo of '+fullPath(n.id)); V.spotSel=null; },
@@ -1118,7 +1125,12 @@ document.addEventListener('change',e=>{ if(e.target.id==='gname'){ const nw=docu
   const changed=k==='crit'?before.critical!==n.critical:k==='par'?(+before.par||0)!==n.par:before[k]!==n[k];
   saveNode(n); if(changed&&msg) logChange(n.truck,msg()); render();
 });
-document.getElementById('photoin').addEventListener('change',async e=>{
+(function(){ const sh=document.getElementById('photosheet'); const close=()=>{ sh.hidden=true; };
+  document.getElementById('ps-cam').addEventListener('click',()=>{ close(); document.getElementById('camin').click(); });
+  document.getElementById('ps-lib').addEventListener('click',()=>{ close(); document.getElementById('photoin').click(); });
+  document.getElementById('ps-x').addEventListener('click',close);
+  sh.addEventListener('click',e=>{ if(e.target===sh) close(); }); })();
+async function onPhotoPicked(e){
   const f=e.target.files&&e.target.files[0]; e.target.value=''; const key=V.photoKey; if(!f||!key) return;
   toast('Saving photo…');
   try{
@@ -1128,7 +1140,9 @@ document.getElementById('photoin').addEventListener('change',async e=>{
     logChange(fresh.truck,(had?'Replaced':'Added')+' the photo of '+fullPath(fresh.id));
     if(fresh.kind!=='item'&&V.nid===fresh.id) toast('Photo saved. Drag on it to draw boxes.'); else toast('Photo saved'); render();
   }catch(err){ toast(online?'Photo didn\'t save. Try again.':'You need a signal to save photos.'); }
-});
+}
+document.getElementById('photoin').addEventListener('change',onPhotoPicked);
+document.getElementById('camin').addEventListener('change',onPhotoPicked);
 
 /* ---------- drawing boxes ---------- */
 let drag=null;
