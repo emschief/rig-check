@@ -297,6 +297,26 @@ details.hist.rs{border-left-color:#0B7A6E}
 .trucks.pick .status{font-size:14px}
 @media (min-width:700px){.trucks.pick{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}}
 .checkcard{margin-bottom:16px}
+.blssum{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.blssum div{background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:2px}
+.blssum b{font-size:18px}.blssum span{font-size:14px;color:var(--muted)}.blssum .bad{color:var(--crit,#C92A2A);font-weight:700}.blssum .good{color:var(--ok);font-weight:700}
+.blswrap{overflow-x:auto;background:var(--panel);border:1.5px solid var(--line);border-radius:14px;-webkit-overflow-scrolling:touch}
+table.bls{border-collapse:separate;border-spacing:0;width:100%;font-size:15px}
+table.bls th,table.bls td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle}
+table.bls thead th{position:sticky;top:0;background:var(--panel);z-index:2;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:2px solid var(--line)}
+table.bls th.eq,table.bls td.eq{text-align:left;position:sticky;left:0;background:var(--panel);z-index:1;min-width:150px;max-width:220px;padding-left:12px}
+table.bls thead th.eq{z-index:3}
+table.bls td.eq{font-size:15px;line-height:1.25}
+table.bls td.req{font-family:var(--f-mono);font-weight:700;color:var(--muted);width:44px}
+table.bls td.c{font-family:var(--f-mono);font-weight:700;font-size:17px;min-width:58px}
+table.bls td.c.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,transparent)}
+table.bls td.c.short{color:#fff;background:var(--crit,#C92A2A)}
+table.bls td.c.none{color:var(--muted);font-weight:400}
+table.bls tr.grp td{background:var(--bg);text-align:left;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:10px 12px}
+table.bls tr.grp td.eq{background:var(--bg)}
+table.bls td.c input{width:52px;font:inherit;text-align:center;padding:6px 2px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+table.bls td.c button{min-width:46px;min-height:38px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);font:inherit;color:inherit}
+.blsnote{font-size:13px;color:var(--muted)}
 .hometiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px}
 @media (min-width:700px){.hometiles{grid-template-columns:repeat(3,1fr)}}
 .htile{display:grid;grid-template-columns:1fr;row-gap:4px;align-content:start;justify-items:start;text-align:left;min-height:96px;padding:14px;border-radius:16px;background:var(--panel);border:2px solid var(--line);color:var(--ink)}
@@ -644,21 +664,55 @@ function homeTiles(){
     rs=tile('hrestock','plusbox','Restock',rx?'Restock in progress · '+Object.keys(rx.items||{}).length+' item'+(Object.keys(rx.items||{}).length===1?'':'s'):open?open+' item'+(open===1?'':'s')+' needed':'After a call','rs'+(open&&!rx?' alert':''));
     const n=checksOf(u.id).length+restocksOf(u.id).length;
     hi=tile('hhistory','clock','History',n?n+' check'+(n===1?'':'s')+' and restocks':'Nothing yet'); }
-  const tiles=[rc,rs,hi,tile('hreports','chart','Reports','All units · crew credit'),
+  const blsShort=trucks().reduce((a,t)=>a+blsTally(t.id).sh,0);
+  const tiles=[rc,rs,hi,tile('hreports','chart','Reports','All units · crew credit'),tile('hbls','box','BLS equipment',blsShort?blsShort+' short across units':'Required vs on board',blsShort?'alert':''),
     adm?tile('hedit','wrench','Unit edit',u?'Set up '+esc(u.name):'Add units','adm'):'',
     adm?tile('accesspage','people','People','Codes and access','adm'):''].join('');
   return '<div class="homeh"><span class="lbl">'+(u?'What do you need on '+esc(u.name)+'?':'Menu')+'</span></div><div class="hometiles">'+tiles+'</div>';
 }
+const BLS=[{"g":"Airway and suction","items":[["proto","Statewide EMS Protocols, current (digital OK if it stays in vehicle)",1,"yn"],["psuct","Portable suction unit (300 mmHg in 4 sec)",1],["scrig","Suction catheter, rigid, sterile",2],["sc6","Suction catheter 6 Fr, sterile",1],["sc8","Suction catheter 8 Fr, sterile",1],["sc10","Suction catheter 10 or 12 Fr, sterile",2],["sc14","Suction catheter 14 or 16 Fr, sterile",2],["opa0","OPA size 0",1],["opa1","OPA size 1",1],["opa2","OPA size 2",1],["opa3","OPA size 3",1],["opa4","OPA size 4",1],["opa5","OPA size 5",1],["npa16","NPA size 16",1],["npa24","NPA size 24",1],["npa26","NPA size 26",1],["npa32","NPA size 32",1],["npa34","NPA size 34",1],["lube","Lubricant, sterile water-soluble (2 cc+ tube)",2]]},{"g":"Oxygen and ventilation","items":[["o2wr","Non-sparking wrench / tank opener",1],["o2port","Portable O2, 300 L min. capacity, 500 PSI min.",1],["o2spare","Full spare O2 cylinder, 300 L",1],["o2sec","Portable O2 cylinders secured in vehicle",1,"yn"],["ncad","Nasal cannula, adult",1],["ncped","Nasal cannula, pediatric",1],["nrbad","High concentration mask, adult",1],["nrbped","High concentration mask, pediatric",1],["nrbinf","High concentration mask, infant",1],["humid","Humidifier bottle",1],["bvmad","BVM, adult (700 cc)",1],["bvmadm","BVM mask, adult",1],["bvmped","BVM, pediatric (450 cc)",1],["bvmch","BVM mask, child",1],["bvminf","BVM mask, infant",1],["bvmneo","BVM mask, neonatal",1]]},{"g":"Assessment","items":[["bpch","BP cuff, child",1],["bpad","BP cuff, adult",1],["bpth","BP cuff, thigh (large)",1],["stad","Stethoscope, adult",1],["stped","Stethoscope, pediatric (or double bell adult/peds)",1],["aed","AED (dual adult/peds OK)",1],["aedad","Defib pads, adult",1],["aedped","Defib pads, pediatric",1],["pen","Penlight",1],["therm","Thermometer, electronic, non-tympanic",1],["spo2","Pulse oximeter",1]]},{"g":"Bleeding, wounds and burns","items":[["multi","Multi-trauma dressing 10\" x 30\"",4],["occl","Occlusive dressing 3\" x 4\"",4],["g4x4","Sterile gauze pads 4\" x 4\"",25],["kerl","Soft self-adhering roller bandage (rolls)",6],["burn","Sterile burn sheet 4' x 4'",2],["tape","Adhesive tape, rolls (1 hypoallergenic)",4],["shear","Bandage shears",1],["tq","Commercial tactical tourniquet",2],["tri","Triangular bandage",8],["nss","Sterile water / normal saline (liters)",2]]},{"g":"Immobilization and moving","items":[["ked","Lateral c-spine device",1],["lsb","Long spine board",1],["ccs","Neck immobilizer, small (or multi-size)",1],["ccm","Neck immobilizer, medium (or multi-size)",1],["ccl","Neck immobilizer, large (or multi-size)",1],["ccp","Neck immobilizer, pediatric",1],["straps","Straps: 9' x5, OR spider + 9' x2, OR speed clips x4 + 9' x2",1,"yn"],["fold","Folding litter / collapsible device",1],["stair","Stair chair",1],["tsad","Traction splint, adult",1],["tsped","Traction splint, pediatric (or combination)",1],["spup","Upper extremity splint",2],["splo","Lower extremity splint",2],["pedtx","Pediatric safe transport device",1]]},{"g":"OB, comfort and linens","items":[["cold","Cold pack, chemical",4],["heat","Heat pack, chemical",4],["ob","Sterile OB kit",2],["bulb","Bulb syringe, sterile",1],["swad","Thermal blanket / silver swaddle / sterile foil",1],["pillow","Pillow",1],["blank","Blanket",2],["sheet","Sheet",4],["case","Pillow case",2],["towel","Towel",4],["tiss","Disposable tissues (box)",1],["emesis","Emesis container",1],["bedpan","Bedpan",1],["urinal","Urinal",1],["cups","Paper drinking cups, 3 oz",4],["jump","Emergency jump kit",1]]},{"g":"Medications and supplies","items":[["asa","Aspirin, oral",1,"yn"],["gluc","Instant glucose 45 g (or food-grade substitute)",1],["alc","Alcohol prep pads",10],["hand","Hand light",2],["flare","Road hazard warning device (flares, triangles)",3],["triage","Regional triage tags",20],["erg","Emergency Response Guidebook, current",1,"yn"],["redbag","Red bags (per infection control plan)",1,"yn"],["handsan","Hand sanitizer, waterless (container)",1]]},{"g":"PPE (1 per crew member)","note":"Required count assumes a crew of 2.","items":[["ppehelm","Helmet",2],["ppeeye","Eye protection (safety)",2],["ppeglove","Work gloves",2],["ppevest","High visibility safety apparel",2],["iceye","Eye protection, clear disposable",2],["icgown","Gown / coat",2],["iccap","Surgical cap / foot covers",2],["icexam","Exam gloves",2],["icn95","N-95 respirator",2]]},{"g":"Optional BLS (per PA protocols)","opt":true,"items":[["o12","12-lead monitor with transmit",0],["ochar","Activated charcoal",0],["ocpap","CPAP with 2 disposable masks",0],["oco","CO monitor",0],["oglu","Electronic glucose meter",0],["oepiA","Epi auto-injector, adult",0],["oepiP","Epi auto-injector, pediatric",0],["oepiK","\"Check and Inject\" kit",0],["oglcg","Glucagon nasal / auto-injector",0],["ohemo","Hemostatic agent",0],["onarc","Naloxone, intranasal / auto-injector",0],["oneb","Nebulized bronchodilator",0]]}];
+const blsAll=()=>BLS.flatMap(g=>g.items.map(it=>({id:it[0],name:it[1],req:it[2],yn:it[3]==='yn',opt:!!g.opt,g:g.g})));
+const blsDoc=tid=>D['bls/'+tid]||{c:{}};
+function blsState(tid,it){ const v=(blsDoc(tid).c||{})[it.id]; if(v==null||v==='') return 'none'; if(it.opt) return 'info'; return (+v)>=it.req?'ok':'short'; }
+function blsTally(tid){ const L=blsAll().filter(x=>!x.opt); let ok=0,sh=0,no=0; L.forEach(it=>{ const s=blsState(tid,it); if(s==='ok') ok++; else if(s==='short') sh++; else no++; }); return {ok,sh,no,total:L.length}; }
+function blsView(){
+  const T=trucks(); const ed=V.blsEdit&&isAdmin(); const only=V.blsShort;
+  const sum='<div class="blssum">'+T.map(t=>{ const x=blsTally(t.id); const d=blsDoc(t.id);
+    return '<div><b>'+esc(t.name)+'</b><span><span class="'+(x.sh?'bad':x.no?'':'good')+'">'+(x.sh?x.sh+' short':x.no?'Nothing short yet':'All met')+'</span> · '+x.ok+'/'+x.total+' met</span>'+(x.no?'<span>'+x.no+' not counted</span>':'')+(d.t?'<span>Updated '+fmtDT(d.t)+(d.by?' by '+esc(d.by):'')+'</span>':'')+'</div>'; }).join('')+'</div>';
+  const cell=(t,it)=>{ const v=(blsDoc(t.id).c||{})[it.id]; const st=blsState(t.id,it);
+    if(ed){ if(it.yn) return '<td class="c"><button data-act="blsyn" data-t="'+t.id+'" data-r="'+it.id+'" aria-label="'+esc(it.name)+' on '+esc(t.name)+'">'+(v==null||v===''?'–':(+v)>=1?'✓':'✗')+'</button></td>';
+      return '<td class="c"><input id="b_'+t.id+'_'+it.id+'" type="number" min="0" inputmode="numeric" data-chg="bls" data-t="'+t.id+'" data-r="'+it.id+'" value="'+(v==null?'':esc(v))+'" aria-label="'+esc(it.name)+' on '+esc(t.name)+'"></td>'; }
+    const txt=v==null||v===''?'–':it.yn?((+v)>=1?'✓':'✗'):String(v);
+    return '<td class="c '+(st==='info'?'':st)+'">'+txt+'</td>'; };
+  let rows='';
+  BLS.forEach(g=>{ const its=g.items.map(it=>({id:it[0],name:it[1],req:it[2],yn:it[3]==='yn',opt:!!g.opt})).filter(it=>!only||T.some(t=>blsState(t.id,it)==='short'));
+    if(!its.length) return;
+    rows+='<tr class="grp"><td colspan="'+(T.length+2)+'">'+esc(g.g)+(g.note?' <span style="text-transform:none;letter-spacing:0;font-weight:500">· '+esc(g.note)+'</span>':'')+'</td></tr>'+
+      its.map(it=>'<tr><td class="eq">'+esc(it.name)+'</td><td class="req">'+(it.opt?'Opt':it.yn?'Yes':it.req)+'</td>'+T.map(t=>cell(t,it)).join('')+'</tr>').join(''); });
+  if(!rows) rows='<tr><td class="eq" colspan="'+(T.length+2)+'" style="padding:16px">Nothing is short on any unit.</td></tr>';
+  const seg='<div class="seg2" role="group"><button data-act="blsfilter" data-v="" aria-pressed="'+!only+'">All items</button><button data-act="blsfilter" data-v="1" aria-pressed="'+!!only+'">Short only</button></div>';
+  return topbar('BLS equipment',V.backTo==='reports'?'Reports':'Home')+'<div class="stack" style="max-width:1000px">'+
+    '<p class="blsnote" style="margin:0">Required amounts from the PA DOH Bureau of EMS Transport Ambulance Inspection Checklist (Ver 1.0, July 1, 2025), BLS sections. Red means less on board than required.</p>'+sum+
+    '<div class="row between">'+seg+(isAdmin()?'<button class="btn '+(ed?'go':'')+'" data-act="blsedit">'+(ed?'Done counting':'Update counts')+'</button>':'')+'</div>'+
+    (ed?'<div class="banner">Type how many are on board each truck. Changes save as you go. Tap ✓/✗ cells to cycle yes, no and not counted.</div>':'')+
+    '<div class="blswrap"><table class="bls"><thead><tr><th class="eq">Equipment</th><th>Req</th>'+T.map(t=>'<th>'+esc(t.name)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+function blsSet(tid,rid,val){ const d=clone(blsDoc(tid)); d.c=d.c||{}; const it=blsAll().find(x=>x.id===rid); const before=d.c[rid];
+  if(val===''||val==null) delete d.c[rid]; else d.c[rid]=Math.max(0,Math.round(+val)||0);
+  if(String(before)===String(d.c[rid])) return; d.t=Date.now(); d.by=me(); persist('bls/'+tid,d);
+  V.blsCh=V.blsCh||{}; V.blsCh[tid]=(V.blsCh[tid]||0)+1; }
+function blsLog(){ Object.entries(V.blsCh||{}).forEach(([tid,n])=>{ const t=truck(tid); logChange(tid,'Updated '+n+' BLS equipment count'+(n===1?'':'s')+' on '+(t?t.name:'')); }); V.blsCh={}; }
 function reportsView(){
   const T=trucks(); const since=Date.now()-30*864e5;
   const cards=T.map(t=>{ const last=checksOf(t.id)[0]; const cur=curOf(t.id); const open=needsList(t.id).filter(x=>!x.done); const crit=open.some(x=>x.critical);
     const n30=checksOf(t.id).filter(k=>k.ts>=since).length, r30=restocksOf(t.id).filter(k=>k.ts>=since).length; const st=truckState(t.id);
     return '<div class="repcard st-'+st.st+'" style="border-left-color:var(--s,'+(crit?'var(--crit,#C92A2A)':open.length?'#E8590C':'var(--ok)')+')"><div class="top"><b style="font-size:22px">'+esc(t.name)+'</b><span class="status st-'+st.st+'"><i class="dot"></i>'+esc(st.text)+'</span></div>'+
       '<div class="muted" style="font-size:15px">'+(cur?'Check in progress, started '+fmtT(cur.started):last?'Last check '+fmtDT(last.ts)+(last.crew?' by '+esc(crewText(last.crew)):''):'No checks yet')+'</div>'+
+      (()=>{ const b=blsTally(t.id); return '<div style="font-size:15px"><b>BLS equipment:</b> '+(b.sh?'<b style="color:var(--crit,#C92A2A)">'+b.sh+' short</b>':'nothing short')+' · '+b.ok+'/'+b.total+' met'+(b.no?' · '+b.no+' not counted':'')+'</div>'; })()+
       '<div class="repstats"><div><b>'+open.length+'</b><span>Needed now</span></div><div><b>'+n30+'</b><span>Checks, 30 days</span></div><div><b>'+r30+'</b><span>Restocks, 30 days</span></div></div>'+
       (open.length?'<div style="font-size:15px">'+open.slice(0,6).map(x=>esc(x.name)+(x.critical?' <b style="color:var(--crit,#C92A2A)">critical</b>':'')).join(' · ')+(open.length>6?' · +'+(open.length-6)+' more':'')+'</div>':'')+
       '<div class="row"><button class="btn small" data-act="repneeds" data-t="'+t.id+'">Needed list</button><button class="btn small" data-act="rephist" data-t="'+t.id+'">History</button></div></div>'; }).join('');
-  return topbar('Reports','Home')+'<div class="stack" style="max-width:860px"><div class="row"><button class="btn" data-act="repcrew">'+ico('people')+' Crew credit</button>'+(isAdmin()?'<button class="btn" data-act="replog">'+ico('clock')+' Change log</button>':'')+'</div>'+
+  return topbar('Reports','Home')+'<div class="stack" style="max-width:860px"><div class="row"><button class="btn" data-act="repbls">'+ico('box')+' BLS equipment</button><button class="btn" data-act="repcrew">'+ico('people')+' Crew credit</button>'+(isAdmin()?'<button class="btn" data-act="replog">'+ico('clock')+' Change log</button>':'')+'</div>'+
     '<div class="lbl">Units</div><div class="rep">'+(cards||'<div class="card muted">No units yet.</div>')+'</div></div>';
 }
 function signinView(){
@@ -941,9 +995,9 @@ function render(){
   if(!LOCAL&&!tok()){ document.getElementById('app').innerHTML=signinView(); const el=document.getElementById(V.needName?'siname':'sicode'); if(el&&document.activeElement!==el&&!V.siFocused){ V.siFocused=1; } return; }
   if(!loaded||drag) return;
   const ae=document.activeElement, fid=ae&&ae.id; let ss=null,se=null; try{ ss=ae.selectionStart; se=ae.selectionEnd; }catch(e){}
-  const keep={}; ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew','rsnew','rsrun','pname','prole','sicode','siname'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
+  const keep={}; if(fid&&ae.dataset&&ae.dataset.chg==='bls') keep[fid]=ae.value; ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew','rsnew','rsrun','pname','prole','sicode','siname'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
   const od=[...document.querySelectorAll('details[id][open]')].map(d=>d.id);
-  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='access'?accessView(): V.screen==='reports'?reportsView(): V.screen==='restock'?restockHub(): V.screen==='history'?historyPage(): V.screen==='rsreview'?rsReviewView(): homeView();
+  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='access'?accessView(): V.screen==='reports'?reportsView(): V.screen==='bls'?blsView(): V.screen==='restock'?restockHub(): V.screen==='history'?historyPage(): V.screen==='rsreview'?rsReviewView(): homeView();
   document.getElementById('app').innerHTML=html;
   Object.entries(keep).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
   od.forEach(id=>{ const d=document.getElementById(id); if(d) d.open=true; });
@@ -966,6 +1020,11 @@ const A={
   hhistory:()=>{ const u=homeUnit(); if(!u) return false; V.backTo=''; go('history',{tid:u.id}); return false; },
   hreports:()=>{ V.backTo=''; go('reports'); return false; },
   hedit:()=>{ if(!isAdmin()){ toast('Unit edit is for supervisors.'); return false; } V.setup=true; V.setupBy=me(); touchSetup(); const u=homeUnit(); if(u) go('truck',{tid:u.id,q:'',tab:'truck'}); else go('home'); toast('Unit edit is open. Tap Exit setup when you are done.'); return false; },
+  hbls:()=>{ blsLog(); V.backTo=''; V.blsEdit=false; go('bls'); return false; },
+  repbls:()=>{ V.backTo='reports'; V.blsEdit=false; go('bls'); return false; },
+  blsfilter:b=>{ V.blsShort=!!b.dataset.v; },
+  blsedit:()=>{ if(!isAdmin()) return false; if(V.blsEdit) blsLog(); V.blsEdit=!V.blsEdit; },
+  blsyn:b=>{ if(!isAdmin()) return false; const v=(blsDoc(b.dataset.t).c||{})[b.dataset.r]; blsSet(b.dataset.t,b.dataset.r,v==null?1:(+v)>=1?0:''); },
   repcrew:()=>{ V.backTo='reports'; go('crew'); return false; },
   replog:()=>{ V.backTo='reports'; go('log'); loadLog(); return false; },
   repneeds:b=>{ V.backTo='reports'; go('restock',{tid:b.dataset.t,q:''}); return false; },
@@ -1031,7 +1090,7 @@ const A={
     else { const k=checksOf(x.tid)[0]; if(k){ const rc=clone(k); const kid=rc.id; delete rc.id; let ch=false; (rc.failed||[]).forEach(f=>{ const hit=items.find(it=>it.node===f.node); if(hit&&!f.restocked){ f.restocked=true; ch=true; rc.restocked=(rc.restocked||[]).concat([{node:f.node,name:f.name,path:f.path,qty:hit.qty,t:now,by,run:x.run||''}]); } }); if(ch) persist('checks/'+kid,rc); } }
     setRS(null); toast('Restock saved: '+items.reduce((a,b)=>a+b.qty,0)+' items'); go('truck',{tid:x.tid,tab:'history'}); return false; },
   setme:b=>{ setMe(b.dataset.v); toast('This phone is now '+b.dataset.v); },
-  back:()=>{ const s=V.screen; if(['log','crew','restock','history'].includes(s)&&V.backTo==='reports'){ V.backTo=''; go('reports'); return false; } if(['pin','roster','log','trucks','gate','crew','access','reports','restock','history'].includes(s)){ V.backTo=''; go('home'); return false; } if(s==='rsstart'){ go('restock'); return false; } if(s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
+  back:()=>{ const s=V.screen; if(s==='bls'){ blsLog(); V.blsEdit=false; } if(['log','crew','restock','history','bls'].includes(s)&&V.backTo==='reports'){ V.backTo=''; go('reports'); return false; } if(['pin','roster','log','trucks','gate','crew','access','reports','restock','history','bls'].includes(s)){ V.backTo=''; go('home'); return false; } if(s==='rsstart'){ go('restock'); return false; } if(s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
   open:b=>{ openNode(b.dataset.n); return false; },
   tab:b=>{ V.tab=b.dataset.v; V.finishArm=false; },
   clearq:()=>{ V.q=''; render(); const el=document.getElementById('q'); if(el) el.focus(); return false; },
@@ -1109,7 +1168,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&(e.target.id==='sicode'||e.target.id==='siname')){ A.signin(); } if(e.key==='Enter'&&e.target.id==='rsnew'){ A.rsaddname(); render(); } if(e.key==='Enter'&&e.target.id==='crewnew'){ A.crewadd(); render(); } if(e.key==='Enter'&&e.target.id==='gpin'&&!document.getElementById('gpin2')){ if(A.entersetup()!==false) render(); } if(e.key==='Enter'&&e.target.id==='q') e.target.blur(); if(e.key==='Enter'&&e.target.id==='newname'){ A.addchild(); render(); } });
 document.addEventListener('input',e=>{ if(e.target.dataset.inp==='q'){ V.q=e.target.value; render(); } });
 document.addEventListener('change',e=>{ if(e.target.id==='gname'){ const nw=document.getElementById('gnew'); if(nw) nw.hidden=e.target.value!=='__new'; return; }
-  const t=e.target,k=t.dataset.chg; if(!k) return; if(k==='rsrun'){ const x=RS(); if(x){ x.run=t.value.trim(); setRS(x); } return; } if(!V.setup){ render(); return; } touchSetup();
+  const t=e.target,k=t.dataset.chg; if(!k) return; if(k==='bls'){ if(isAdmin()){ blsSet(t.dataset.t,t.dataset.r,t.value.trim()); } return; } if(k==='rsrun'){ const x=RS(); if(x){ x.run=t.value.trim(); setRS(x); } return; } if(!V.setup){ render(); return; } touchSetup();
   if(k==='tname'){ const tr=truck(t.dataset.t); if(tr){ const o=clone(tr); delete o.id; o.name=t.value.trim()||tr.name; if(o.name!==tr.name){ persist('trucks/'+tr.id,o); logChange(tr.id,'Renamed truck '+tr.name+' to '+o.name); } } render(); return; }
   if(k==='spotnode'){ const n=node(V.nid); n.spots=(n.spots||[]).map(s=>s.id===t.dataset.s?Object.assign({},s,{node:t.value}):s); saveNode(n); if(t.value){ const kk=node(t.value); logChange(n.truck,'Linked a box on the photo of '+fullPath(n.id)+' to "'+(kk?kk.name:'')+'"'); V.spotSel=null; } render(); return; }
   const n=node(t.dataset.n); if(!n) return; const before=clone(n); const where=fullPath(n.id);
