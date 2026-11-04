@@ -368,6 +368,16 @@ table.bls td.c button{min-width:46px;min-height:38px;border-radius:8px;border:1.
 .aka{display:block;font-size:14px;line-height:1.25;color:var(--muted);font-weight:500;margin-top:1px}
 .reqrow .aka,.placed .aka{font-size:13px}
 table.bls td.eq .aka{font-size:12px}
+.agb{display:inline-block;margin-top:3px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#8A4B00;background:color-mix(in srgb,#E8590C 16%,transparent);border-radius:999px;padding:2px 8px}
+@media (prefers-color-scheme: dark){.agb{color:#FFB37A}}
+.kitb{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--indigo);background:color-mix(in srgb,var(--indigo) 14%,transparent);border-radius:999px;padding:2px 8px;margin-right:6px}
+details.kitc{grid-column:1 / -1;font-size:15px;background:color-mix(in srgb,var(--bg) 70%,transparent);border-radius:12px;padding:8px 12px}
+details.kitc summary{cursor:pointer;font-weight:700;color:var(--muted)}
+details.kitc ul{margin:6px 0 2px;padding-left:18px}
+.kitrow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--bg)}
+.kitrow input{width:64px;text-align:center}
+.ploc.kit{grid-template-columns:1fr auto}
+.ploc.kit span:last-child{font-size:13px;color:var(--muted)}
 .steps{display:grid;gap:10px;margin-bottom:14px}
 .step{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
 .step .num{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:900;background:var(--bg);color:var(--muted)}
@@ -832,7 +842,7 @@ function moreView(){ const adm=isAdmin(); const w=who();
   const u=homeUnit();
   return '<header class="thead"><h1>More</h1></header><div class="stack" style="max-width:640px">'+installCard()+
     '<div class="mlist">'+row('hhistory','clock','History',u?'Checks and restocks on '+esc(u.name):'')+row('hbls','box','Required equipment','BLS / IALS list vs on board')+row('hreports','chart','Reports','All units at a glance')+row('repcrew','people','Crew credit','Who did checks and restocks')+'</div>'+
-    (adm?'<div class="lbl" style="margin-top:6px">Supervisor</div><div class="mlist">'+row('accesspage','people','People & access','Codes, roles, remove access','adm')+row('replog','log','Change log','Who changed what, and when','adm')+row('mtrucks','truck','Add or rename units','Trucks, photos and order','adm')+'</div>':'')+
+    (adm?'<div class="lbl" style="margin-top:6px">Supervisor</div><div class="mlist">'+row('accesspage','people','People & access','Codes, roles, remove access','adm')+row('replog','log','Change log','Who changed what, and when','adm')+row('kitsmore','box','Kits','IV start kit and other kits','adm')+row('mtrucks','truck','Add or rename units','Trucks, photos and order','adm')+'</div>':'')+
     '<div class="mlist">'+row('signout','out',V.arm==='signout'?'Tap again to sign out':'Sign out',w?'Signed in as '+esc(w.name)+(w.role!=='crew'?' ('+w.role+')':''):'')+'</div></div>';
 }
 function homeUnit(){ const T=trucks(); if(!T.length) return null; let id=V.unit||ls.get('rc3-unit',''); if(!T.some(t=>t.id===id)) id=T[0].id; V.unit=id; return truck(id); }
@@ -889,8 +899,10 @@ const agencyAlias=()=>(D['meta/alias']&&D['meta/alias'].a)||{};
 const aliasMap=()=>Object.assign({},STATE_ALIAS,agencyAlias());
 const customReq=()=>(D['meta/customreq']&&D['meta/customreq'].items)||[];
 const nm2=(t,sub)=>'<b>'+esc(t)+'</b>'+(sub?'<span class="aka">'+esc(sub)+'</span>':'');
-const reqNameHTML=it=>it.alias?nm2(it.alias,it.official):nm2(it.official||it.name,'');
-function nodeNameHTML(n){ const it=n.req?reqById(n.req):null; if(!it) return nm2(n.name,'');
+const AGB='<span class="agb">Agency item · not on state list</span>';
+const reqNameHTML=it=>(it.alias?nm2(it.alias,it.official):nm2(it.official||it.name,''))+(it.custom?AGB:'');
+function nodeNameHTML(n){ if(n.kit){ const k=kitById(n.kit); return nm2(n.name,'Kit'+(k?' · '+(k.contents||[]).length+' item'+((k.contents||[]).length===1?'':'s')+' in each':'')); } const it=n.req?reqById(n.req):null; if(!it) return nm2(n.name,'');
+  if(it.custom) return nm2(it.alias||it.official,it.alias?it.official:'')+AGB;
   if(n.fromList) return it.alias?nm2(it.alias,it.official):nm2(it.official,'');
   const base=String(n.name||''); return nm2(base, base.toLowerCase()===String(it.official).toLowerCase()?(it.alias||''):it.official); }
 const reqDisp=(id,name)=>{ const a=aliasMap()[id]; return a?a+' ('+name+')':name; };
@@ -900,14 +912,19 @@ const blsAll=()=>reqGroups().flatMap(g=>g.items.map(it=>({id:it[0],name:it[1],of
 const blsDoc=tid=>D['bls/'+tid]||{c:{}};
 const reqById=id=>blsAll().find(x=>x.id===id);
 const reqLinked=(tid,rid)=>allNodes().filter(n=>n.truck===tid&&n.kind==='item'&&n.req===rid);
-const reqPlacedQty=(tid,it)=>reqLinked(tid,it.id).reduce((a,n)=>a+(n.type==='count'?(+n.par||0):1),0);
-function reqAuto(tid,it){ const L=reqLinked(tid,it.id); if(!L.length) return null; const ids=new Set(L.map(n=>n.id));
-  const placed=L.reduce((a,n)=>a+(n.type==='count'?(+n.par||0):1),0); const last=checksOf(tid)[0];
-  const lost=last?(last.failed||[]).filter(f=>ids.has(f.node)&&!f.restocked).reduce((a,f)=>a+(+f.need||1),0):0;
+const kitDefs=()=>(D['meta/kits']&&D['meta/kits'].items)||[];
+const kitById=id=>kitDefs().find(k=>k.id===id);
+const kitNodes=tid=>allNodes().filter(n=>n.truck===tid&&n.kind==='item'&&n.kit);
+function reqKitUses(tid,rid){ const out=[]; kitNodes(tid).forEach(n=>{ const k=kitById(n.kit); if(!k) return; const c=(k.contents||[]).find(x=>x.r===rid); if(c) out.push({node:n,kit:k,per:+c.q||1,kits:+n.par||0,qty:(+c.q||1)*(+n.par||0)}); }); return out; }
+const reqPlacedQty=(tid,it)=>reqLinked(tid,it.id).reduce((a,n)=>a+(n.type==='count'?(+n.par||0):1),0)+reqKitUses(tid,it.id).reduce((a,u)=>a+u.qty,0);
+const reqHas=(tid,it)=>reqLinked(tid,it.id).length+reqKitUses(tid,it.id).length;
+function reqAuto(tid,it){ const L=reqLinked(tid,it.id); const K=reqKitUses(tid,it.id); if(!L.length&&!K.length) return null; const ids=new Set(L.map(n=>n.id)); const per={}; K.forEach(u=>per[u.node.id]=u.per);
+  const placed=reqPlacedQty(tid,it); const last=checksOf(tid)[0];
+  const lost=last?(last.failed||[]).filter(f=>(ids.has(f.node)||per[f.node])&&!f.restocked).reduce((a,f)=>a+(+f.need||1)*(per[f.node]||1),0):0;
   let v=Math.max(0,placed-lost); if(it.yn) v=v>=1?1:0; return v; }
 function blsVal(tid,it){ const a=reqAuto(tid,it); if(a!=null) return a; const v=(blsDoc(tid).c||{})[it.id]; return v==null||v===''?null:+v; }
 function blsState(tid,it){ const v=blsVal(tid,it); if(v==null) return 'none'; if(it.opt) return 'info'; return v>=Math.max(1,it.req)?'ok':'short'; }
-function blsTally(tid){ const L=blsAll().filter(x=>!x.opt); let ok=0,sh=0,no=0; L.forEach(it=>{ const s=blsState(tid,it); if(s==='ok') ok++; else if(s==='short') sh++; else no++; }); return {ok,sh,no,total:L.length}; }
+function blsTally(tid){ const L=blsAll().filter(x=>!x.opt&&!x.custom); let ok=0,sh=0,no=0; L.forEach(it=>{ const s=blsState(tid,it); if(s==='ok') ok++; else if(s==='short') sh++; else no++; }); return {ok,sh,no,total:L.length}; }
 function blsView(){
   const T=trucks(); const ed=V.blsEdit&&isAdmin(); const only=V.blsShort;
   const sum='<div class="blssum">'+T.map(t=>{ const x=blsTally(t.id); const d=blsDoc(t.id);
@@ -966,7 +983,7 @@ function reqTruckView(){
 function containersOf(tid){ const out=[]; const walk=(id,d)=>{ kidsOf(id).filter(k=>k.kind!=='item').forEach(k=>{ out.push({n:k,d}); walk(k.id,d+1); }); };
   topComps(tid).forEach(c=>{ out.push({n:c,d:0}); walk(c.id,1); }); return out; }
 const reqSkipped=(tid,rid)=>!!((blsDoc(tid).skip||{})[rid]);
-function reqStatus(tid,it){ const pl=reqPlacedQty(tid,it); const has=reqLinked(tid,it.id).length;
+function reqStatus(tid,it){ const pl=reqPlacedQty(tid,it); const has=reqHas(tid,it);
   if(reqSkipped(tid,it.id)&&!has) return 'skip'; if(it.opt) return has?'ok':'opt'; if(!has) return 'no'; return pl>=Math.max(1,it.req)?'ok':'part'; }
 function placeView(){
   const t=truck(V.tid); if(!t) return homeView(); const C=containersOf(t.id); const L=blsAll();
@@ -976,14 +993,15 @@ function placeView(){
   const mode=V.placeMode||'todo'; const filt=(V.reqQ||'').trim().toLowerCase();
   if(!C.length) return topbar('Place the list · '+t.name,'Setup')+'<div class="card empty"><b>Set up compartments first.</b><span class="muted">Step 1 is adding the compartments and bags on '+esc(t.name)+'. Then come back here and put every item on the list in its place.</span><button class="btn primary" data-act="back">Go to step 1</button></div>';
   const card=it=>{ const st=reqStatus(t.id,it); const Lk=reqLinked(t.id,it.id); const pl=reqPlacedQty(t.id,it); const open=V.placeFor===it.id;
-    const stTxt=st==='skip'?'Not carried':st==='opt'?'Optional':it.yn?(Lk.length?'Placed':'No location'):(pl+' of '+it.req+(st==='part'?' · '+(it.req-pl)+' short':''));
+    const stTxt=st==='skip'?'Not carried':st==='opt'?'Optional':it.yn?(reqHas(t.id,it)?'Placed':'No location'):(pl+' of '+it.req+(st==='part'?' · '+(it.req-pl)+' short':''));
     const a=aliasMap()[it.id];
     return '<div class="pcard '+st+'" id="pc-'+it.id+'"><div class="hd"><b>'+esc(a||it.official||it.name)+(a?'<span class="off">'+esc(it.official)+'</span>':'')+'</b><span class="st">'+(it.opt&&st!=='skip'&&st!=='opt'?'Optional · ':'')+stTxt+'</span></div>'+
       (!it.opt&&!it.yn?'<span class="muted" style="font-size:14px">Required on the truck: <b>'+it.req+'</b></span>':it.yn&&!it.opt?'<span class="muted" style="font-size:14px">Required: yes (pass/fail)</span>':'')+
+      reqKitUses(t.id,it.id).map(u=>'<div class="ploc kit"><span><span class="kitb">Kit</span>'+esc(u.kit.name)+' ×'+u.kits+' · '+esc(fullPath(u.node.parent).replace(t.name+' › ',''))+'</span><span>'+u.qty+' ('+u.per+' each)</span></div>').join('')+
       Lk.map(n=>'<div class="ploc"><span>'+esc(fullPath(n.parent).replace(t.name+' › ',''))+'</span>'+(n.type==='count'?'<input id="pq_'+n.id+'" class="sinp" type="number" min="0" inputmode="numeric" data-chg="par" data-n="'+esc(n.id)+'" value="'+(+n.par||0)+'" aria-label="How many in '+esc(fullPath(n.parent))+'">':'<span class="muted" style="font-size:13px">✓</span>')+'<button class="x" data-act="plocdel" data-n="'+esc(n.id)+'" aria-label="Remove from '+esc(fullPath(n.parent))+'">'+(V.arm==='pl'+n.id?'?':'×')+'</button></div>').join('')+
       (open?'<div class="cpick"><span class="lbl">Where is it? Tap a compartment or bag</span>'+C.map(c=>'<button class="d'+Math.min(3,c.d)+'" data-act="plocadd" data-c="'+esc(c.n.id)+'" data-r="'+it.id+'">'+esc((c.n.code?c.n.code+' ':'')+c.n.name)+'<small>'+esc(c.d?(c.n.label||'Bag'):LOC_NAME[c.n.loc]||'')+'</small></button>').join('')+'<button data-act="placefor" data-r="" style="text-align:center;color:var(--muted)">Cancel</button></div>':'')+
       '<div class="pacts">'+(open?'':'<button class="btn small primary" data-act="placefor" data-r="'+it.id+'">+ '+(Lk.length?'Another location':'Add location')+'</button>')+
-      (Lk.length?'':'<button class="btn small" data-act="placeskip" data-r="'+it.id+'">'+(reqSkipped(t.id,it.id)?'Undo not carried':'Not carried')+'</button>')+
+      (Lk.length||reqKitUses(t.id,it.id).length?'':'<button class="btn small" data-act="placeskip" data-r="'+it.id+'">'+(reqSkipped(t.id,it.id)?'Undo not carried':'Not carried')+'</button>')+
       '<button class="btn small" data-act="aliasedit" data-r="'+it.id+'">'+(a?'Nickname: '+esc(a):'+ Nickname')+'</button>'+
       (it.custom?'<button class="btn small danger" data-act="customdel" data-r="'+it.id+'">'+(V.arm==='cd'+it.id?'Tap again to delete':'Delete from list')+'</button>':'')+'</div>'+
       (V.aliasFor===it.id?'<div class="aliasrow"><input id="aliasin" class="sinp" placeholder="'+esc(STATE_ALIAS[it.id]?'Master list: '+STATE_ALIAS[it.id]:'e.g. Tylenol')+'" value="'+esc(agencyAlias()[it.id]||'')+'" autocomplete="off"><button class="btn small primary" data-act="aliassave" data-r="'+it.id+'">Save</button></div><span class="hint">Your nickname shows big everywhere, with the official name under it, and works in search. It applies to every truck'+(STATE_ALIAS[it.id]?' and replaces the master list\'s common name for your agency. Leave it empty to use "'+esc(STATE_ALIAS[it.id])+'"':'')+'.</span>':'')+'</div>'; };
@@ -1006,17 +1024,41 @@ function addBox(n){
   const q=(V.addQ||'').trim(); const ql=q.toLowerCase(); const tid=n.truck;
   let res='';
   if(ql.length>=2){ const words=ql.split(/\s+/).filter(Boolean);
+    const kh=kitDefs().filter(k=>words.every(w=>k.name.toLowerCase().includes(w))).slice(0,4);
     const hits=blsAll().filter(it=>words.every(w=>it.name.toLowerCase().includes(w))).sort((a,b)=>{ const pa=reqPlacedQty(tid,a)>=Math.max(1,a.req)?1:0, pb=reqPlacedQty(tid,b)>=Math.max(1,b.req)?1:0; return pa-pb; }).slice(0,8);
-    res='<div class="stack" style="gap:6px">'+hits.map(it=>{ const pl=reqPlacedQty(tid,it); const left=Math.max(1,(it.req||1)-pl); const here=reqLinked(tid,it.id).some(x=>x.parent===n.id);
+    res='<div class="stack" style="gap:6px">'+kh.map(k=>{ const onT=kitNodes(tid).filter(x=>x.kit===k.id).reduce((a,x)=>a+(+x.par||0),0); return '<div class="reqrow"><span class="box" style="border:0;color:var(--indigo)">'+ico('box')+'</span><span>'+nm2(k.name,'')+'<small><span class="kitb">Kit</span>'+(k.contents||[]).length+' items in each · '+onT+' on this truck</small></span><span class="row" style="gap:6px;flex-wrap:nowrap;align-items:center"><input id="aqk_'+k.id+'" data-keep="1" class="sinp" type="number" min="0" inputmode="numeric" value="1" aria-label="How many kits"><button class="btn small primary" data-act="kitplace" data-k="'+k.id+'">Add</button></span></div>'; }).join('')+hits.map(it=>{ const pl=reqPlacedQty(tid,it); const left=Math.max(1,(it.req||1)-pl); const here=reqLinked(tid,it.id).some(x=>x.parent===n.id);
       return '<div class="reqrow"><span class="box" style="border:0;color:var(--accent)">'+ico('item')+'</span><span>'+reqNameHTML(it)+'<small>'+(it.opt?'Optional':it.yn?(pl?'Already on this truck':'Required, pass/fail'):'Truck needs '+it.req+' · placed '+pl)+(here?' · already in here':'')+'</small></span><span class="row" style="gap:6px;flex-wrap:nowrap;align-items:center">'+(it.yn?'':'<input id="aq_'+it.id+'" data-keep="1" class="sinp" type="number" min="0" inputmode="numeric" value="'+left+'" aria-label="How many">')+'<button class="btn small primary" data-act="quickadd" data-r="'+it.id+'">Add</button></span></div>'; }).join('')+
-      '<div class="reqrow"><span class="box" style="border:0;color:var(--muted)">+</span><span><b>"'+esc(q)+'"</b><small>Not on the list: add it as your own item</small></span><span class="row" style="gap:6px;flex-wrap:nowrap;align-items:center"><input id="aq__own" data-keep="1" class="sinp" type="number" min="0" inputmode="numeric" value="1" aria-label="How many"><button class="btn small" data-act="quickown">Add</button></span></div></div>'; }
-  const kinds=KINDS.map(k=>'<button data-act="addkind" data-v="'+k+'" aria-pressed="'+(V.addKind===k)+'">+ '+k+'</button>').join('');
+      '<div class="reqrow"><span class="box" style="border:0;color:var(--muted)">+</span><span><b>"'+esc(q)+'"</b><small>Not on the list: add it to your agency list and put it here</small></span><span class="row" style="gap:6px;flex-wrap:nowrap;align-items:center"><input id="aq__own" data-keep="1" class="sinp" type="number" min="0" inputmode="numeric" value="1" aria-label="How many"><button class="btn small" data-act="quickown">Add</button></span></div></div>'; }
+  const kinds=KINDS.filter(k=>k!=='Kit').map(k=>'<button data-act="addkind" data-v="'+k+'" aria-pressed="'+(V.addKind===k)+'">+ '+k+'</button>').join('');
   return '<div class="card stack" id="addbox"><b>Add items to '+esc(n.name)+'</b>'+
     '<div class="search">'+ico('search')+'<input id="addq" data-inp="addq" value="'+esc(V.addQ||'')+'" placeholder="Type an item: gauze, OPA, Tylenol…" autocomplete="off" enterkeyhint="search"></div>'+
-    (res||'<span class="hint">Start typing to find it on the required list. Pick how many are in here and tap Add. Anything not on the list can be added as your own item.</span>')+
-    '<button class="btn small" data-act="reqpick" style="justify-self:start">Browse the whole list</button>'+
+    (res||'<span class="hint">Start typing to find an item or kit. Pick how many are in here and tap Add. Anything not on the list is added to your agency list for next time. Type a kit name, like IV start kit, to make a kit.</span>')+
+    (ql.length>=2&&!kitDefs().some(k=>k.name.toLowerCase()===ql)?'<div class="reqrow"><span class="box" style="border:0;color:var(--indigo)">'+ico('box')+'</span><span><b>Make a kit called "'+esc(q)+'"</b><small>Then add what goes in it. You can place as many kits as you like.</small></span><button class="btn small" data-act="kitnew">Make kit</button></div>':'')+
+    '<div class="row"><button class="btn small" data-act="reqpick">Browse the whole list</button><button class="btn small" data-act="kitspage">'+ico('box')+' Kits</button></div>'+
     '<div class="lbl" style="margin-top:6px">Or add a container inside '+esc(n.name)+'</div><div class="kindpick">'+kinds+'</div>'+
     (V.addKind&&V.addKind!=='Item'?'<div class="row"><input id="newname" class="sinp" placeholder="'+esc(V.addKind)+' name, e.g. Airway '+esc(V.addKind.toLowerCase())+'" style="flex:1;min-width:180px"><button class="btn small primary" data-act="addchild">Add '+esc(V.addKind.toLowerCase())+'</button></div>':'')+'</div>';
+}
+function newKit(name){ const L=kitDefs().slice(); const k={id:'k'+uid(),name:String(name).trim().slice(0,60),contents:[]}; L.push(k); persist('meta/kits',{items:L}); logChange('','Made kit "'+k.name+'"'); return k; }
+function agencyItem(name,req){ name=String(name).trim().slice(0,80); const L=customReq().slice(); let c=L.find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(!c){ c={id:'c'+uid(),name,req:Math.max(0,+req||0)}; L.push(c); persist('meta/customreq',{items:L}); logChange('','Added "'+name+'" to the agency list (not on state list)'); }
+  return reqById(c.id)||{id:c.id,name:c.name,official:c.name,req:c.req,custom:true}; }
+function kitsView(){
+  const L=kitDefs(); const ek=V.kitEdit?kitById(V.kitEdit):null;
+  if(ek){ const q=(V.kitQ||'').trim().toLowerCase(); let res='';
+    if(q.length>=2){ const words=q.split(/\s+/); const hits=blsAll().filter(it=>words.every(w=>it.name.toLowerCase().includes(w))&&!(ek.contents||[]).some(c=>c.r===it.id)).slice(0,8);
+      res='<div class="stack" style="gap:6px">'+hits.map(it=>'<div class="reqrow"><span class="box" style="border:0;color:var(--accent)">'+ico('item')+'</span><span>'+reqNameHTML(it)+'</span><span class="row" style="gap:6px;flex-wrap:nowrap;align-items:center"><input id="kq_'+it.id+'" data-keep="1" class="sinp" type="number" min="1" inputmode="numeric" value="1" aria-label="How many in each kit"><button class="btn small primary" data-act="kitadditem" data-r="'+it.id+'">Add</button></span></div>').join('')+
+        '<div class="reqrow"><span class="box" style="border:0;color:var(--muted)">+</span><span><b>"'+esc(V.kitQ.trim())+'"</b><small>Not on the list: add it to your agency list and to this kit</small></span><span class="row" style="gap:6px;flex-wrap:nowrap;align-items:center"><input id="kq__own" data-keep="1" class="sinp" type="number" min="1" inputmode="numeric" value="1"><button class="btn small" data-act="kitaddown">Add</button></span></div></div>'; }
+    const placed=allNodes().filter(n=>n.kit===ek.id); const tot={}; placed.forEach(n=>{ tot[n.truck]=(tot[n.truck]||0)+(+n.par||0); });
+    return topbar(ek.name,V.kitBack==='node'?((node(V.kitNid)||{}).name||'Back'):'Kits')+'<div class="stack" style="max-width:760px">'+
+      '<div class="card stack"><label class="field"><span class="lbl">Kit name</span><input class="inp" id="kitname" value="'+esc(ek.name)+'" data-chg="kitname" data-k="'+ek.id+'"></label>'+
+      '<span class="muted" style="font-size:15px">'+(placed.length?'Placed: '+Object.entries(tot).map(([tid,n])=>esc((truck(tid)||{}).name||'')+' ×'+n).join(', '):'Not placed on any truck yet. In setup, open a compartment or bag and type the kit name to add it.')+'</span></div>'+
+      '<div class="lbl">In each kit</div><div class="stack" style="gap:6px">'+((ek.contents||[]).map(c=>{ const it=reqById(c.r); return '<div class="kitrow"><span>'+(it?reqNameHTML(it):'<b>Removed item</b>')+'</span><input id="kc_'+c.r+'" class="sinp" type="number" min="1" inputmode="numeric" data-chg="kitqty" data-k="'+ek.id+'" data-r="'+c.r+'" value="'+(+c.q||1)+'" aria-label="How many in each kit"><button class="x iconbtn" data-act="kitrem" data-r="'+c.r+'" aria-label="Remove">'+(V.arm==='kr'+c.r?'?':'×')+'</button></div>'; }).join('')||'<div class="card muted">Nothing in this kit yet. Add items below.</div>')+'</div>'+
+      '<div class="card stack"><b>Add to the kit</b><div class="search">'+ico('search')+'<input id="kitq" data-inp="kitq" value="'+esc(V.kitQ||'')+'" placeholder="Type an item: 18 ga, tourniquet, tegaderm…" autocomplete="off"></div>'+(res||'<span class="hint">Items in a kit count toward the truck\'s totals, times the number of kits placed.</span>')+'</div>'+
+      '<button class="btn danger" data-act="kitdel" style="justify-self:start">'+(V.arm==='kitdel'?(placed.length?'Tap again: removes '+placed.length+' placed kit'+(placed.length===1?'':'s')+' too':'Tap again to delete'):'Delete this kit')+'</button></div>';
+  }
+  return topbar('Kits',V.kitBack==='node'?'Back':'More')+'<div class="stack" style="max-width:760px"><p class="hint" style="margin:0">A kit is a sealed or packed set you check as one item, like an IV start kit. Set up what is in it once, then place as many kits as you need. Everything inside counts toward each truck\'s totals.</p>'+
+    (L.length?'<div class="mlist">'+L.map(k=>'<button data-act="kitopen" data-k="'+k.id+'"><span class="ti">'+ico('box')+'</span><span>'+esc(k.name)+'<small>'+(k.contents||[]).length+' items in each · placed '+allNodes().filter(n=>n.kit===k.id).reduce((a,n)=>a+(+n.par||0),0)+'</small></span><span class="chev">›</span></button>').join('')+'</div>':'<div class="card muted">No kits yet.</div>')+
+    '<div class="card stack"><b>New kit</b><div class="row"><input id="kitnew" class="sinp" placeholder="e.g. IV start kit" style="flex:1;min-width:180px"><button class="btn small primary" data-act="kitcreate">Make kit</button></div></div></div>';
 }
 function reqLinkView(){
   const n=node(V.linkId); if(!n) return homeView(); const filt=(V.reqQ||'').trim().toLowerCase(); const tid=n.truck;
@@ -1235,13 +1277,15 @@ function photoPanel(n){
 function itemRow(it,cur,editing){
   const th=nodeThumb(it); const st=itemSt(it,cur); const r=resOf(cur,it.id);
   if(editing) return editRow(it);
-  const meta= it.type==='count'?'Should have '+(+it.par||0):'Pass / fail check';
+  const kd=it.kit?kitById(it.kit):null;
+  const meta= kd?'<span class="kitb">Kit</span>Should have '+(+it.par||0)+' kit'+((+it.par||0)===1?'':'s'):it.type==='count'?'Should have '+(+it.par||0):'Pass / fail check';
+  const kitList= kd&&(kd.contents||[]).length?'<details class="kitc"><summary>What\'s in each kit ('+kd.contents.length+')</summary><ul>'+kd.contents.map(c=>{ const ri=reqById(c.r); return '<li>'+esc(ri?(ri.alias||ri.official):'Item')+' × '+(+c.q||1)+'</li>'; }).join('')+'</ul></details>':'';
   let ctl='';
   if(cur){
     ctl='<div class="ctl"><div class="tri" role="group" aria-label="'+esc(it.name)+'"><button class="pass" data-act="res" data-v="pass" data-n="'+esc(it.id)+'" aria-pressed="'+(r==='pass')+'">Pass</button><button class="fail" data-act="res" data-v="fail" data-n="'+esc(it.id)+'" aria-pressed="'+(r==='fail')+'">Fail</button><button class="none" data-act="res" data-v="" data-n="'+esc(it.id)+'" aria-pressed="'+(!r)+'">Not checked</button></div>'+
       (r==='fail'&&it.type==='count'?'<div class="have"><span>How many are there?</span><div class="step"><button data-act="have" data-d="-1" data-n="'+esc(it.id)+'" aria-label="One less">−</button><output>'+((cur.have&&cur.have[it.id])||0)+'</output><button data-act="have" data-d="1" data-n="'+esc(it.id)+'" aria-label="One more">+</button></div><span class="muted">of '+(+it.par||0)+' · need '+needOf(it,cur)+'</span></div>':'')+'</div>';
   }
-  return '<div class="item st-'+st+'" id="it-'+esc(it.id)+'"><span class="rt">'+(th?'<img src="'+esc(th)+'" alt="">':ico('item'))+'</span><div style="min-width:0">'+nodeNameHTML(it)+'<small>'+meta+(it.critical?' · <span class="c">Critical</span>':'')+'</small></div>'+ctl+'</div>';
+  return '<div class="item st-'+st+'" id="it-'+esc(it.id)+'"><span class="rt">'+(th?'<img src="'+esc(th)+'" alt="">':ico('item'))+'</span><div style="min-width:0">'+nodeNameHTML(it)+'<small>'+meta+(it.critical?' · <span class="c">Critical</span>':'')+'</small></div>'+kitList+ctl+'</div>';
 }
 function rsItemRow(it,x){
   const th=nodeThumb(it); const q=(x.items||{})[it.id]||0;
@@ -1263,6 +1307,9 @@ function rsReviewView(){
 }
 function editRow(k){
   const isItem=k.kind==='item'; const th=nodeThumb(k);
+  if(k.kit){ const kd=kitById(k.kit); return '<div class="erow" id="it-'+esc(k.id)+'"><div class="top"><span style="min-width:0">'+nodeNameHTML(k)+'</span><button class="iconbtn" data-act="photo" data-k="node:'+esc(k.id)+'" aria-label="Photo">'+(th?'<img src="'+esc(th)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px">':ico('cam'))+'</button></div>'+
+    '<div class="opts"><label class="crit-l">How many kits here <input class="sinp" type="number" min="0" inputmode="numeric" style="width:80px" data-chg="par" data-n="'+esc(k.id)+'" value="'+(+k.par||0)+'"></label><button class="btn small" data-act="kitopen" data-k="'+esc(k.kit)+'">Edit what\'s in the kit</button></div>'+
+    '<div class="acts"><button class="iconbtn" data-act="up" data-n="'+esc(k.id)+'" aria-label="Move up">↑</button><button class="btn small" data-act="move" data-n="'+esc(k.id)+'">'+ico('move')+' Move</button><button class="btn small danger" data-act="del" data-n="'+esc(k.id)+'">'+(V.arm==='d'+k.id?'Tap again':'Remove')+'</button></div></div>'; }
   return '<div class="erow" id="it-'+esc(k.id)+'"><div class="top"><input class="sinp" data-chg="name" data-n="'+esc(k.id)+'" value="'+esc(k.name)+'" aria-label="Name"><button class="iconbtn" data-act="photo" data-k="node:'+esc(k.id)+'" aria-label="Photo">'+(th?'<img src="'+esc(th)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px">':ico('cam'))+'</button></div>'+
     '<div class="opts">'+(isItem?'<select class="sinp" data-chg="type" data-n="'+esc(k.id)+'" aria-label="Check type"><option value="count" '+(k.type==='count'?'selected':'')+'>Count</option><option value="check" '+(k.type==='check'?'selected':'')+'>Pass / fail</option></select>'+(k.type==='count'?'<label class="crit-l">Should have <input class="sinp" type="number" min="0" inputmode="numeric" style="width:80px" data-chg="par" data-n="'+esc(k.id)+'" value="'+(+k.par||0)+'"></label>':'')+'<label class="crit-l"><input type="checkbox" data-chg="crit" data-n="'+esc(k.id)+'" '+(k.critical?'checked':'')+'>Critical</label>'+'<button class="linkbtn'+(k.req?' on':'')+'" data-act="reqlink" data-n="'+esc(k.id)+'">'+(k.req&&reqById(k.req)?'Required list: '+esc(reqById(k.req).name):'Required list: not linked')+'</button>'
       :'<select class="sinp" data-chg="label" data-n="'+esc(k.id)+'" aria-label="Type">'+KINDS.map(x=>'<option '+(x===k.label?'selected':'')+'>'+x+'</option>').join('')+'</select>')+'</div>'+
@@ -1329,9 +1376,9 @@ function render(){
   if(!LOCAL&&!tok()){ document.getElementById('app').innerHTML=signinView(); const el=document.getElementById(V.needName?'siname':'sicode'); if(el&&document.activeElement!==el&&!V.siFocused){ V.siFocused=1; } return; }
   if(!loaded||drag) return;
   const ae=document.activeElement, fid=ae&&ae.id; let ss=null,se=null; try{ ss=ae.selectionStart; se=ae.selectionEnd; }catch(e){}
-  const keep={}; if(fid&&ae.dataset&&ae.dataset.chg==='bls') keep[fid]=ae.value; document.querySelectorAll('[data-keep]').forEach(el=>{ if(el.id) keep[el.id]=el.value; }); ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew','rsnew','rsrun','pname','prole','sicode','siname','cname','creq','aliasin'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
+  const keep={}; if(fid&&ae.dataset&&ae.dataset.chg==='bls') keep[fid]=ae.value; document.querySelectorAll('[data-keep]').forEach(el=>{ if(el.id) keep[el.id]=el.value; }); ['crewnew','miles','newname','newpar','newtype','tnew','ccode','cname','cloc','spname','gname','gnew','gpin','gpin2','p0','p1','p2','rnew','rsnew','rsrun','pname','prole','sicode','siname','cname','creq','aliasin','kitnew'].forEach(id=>{ const el=document.getElementById(id); if(el) keep[id]=el.value; });
   const od=[...document.querySelectorAll('details[id][open]')].map(d=>d.id);
-  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='access'?accessView(): V.screen==='more'?moreView(): V.screen==='reports'?reportsView(): V.screen==='bls'?blsView(): V.screen==='reqpick'?reqPickView(): V.screen==='reqtruck'?placeView(): V.screen==='reqlink'?reqLinkView(): V.screen==='restock'?restockHub(): V.screen==='history'?historyPage(): V.screen==='rsreview'?rsReviewView(): homeView();
+  const html= V.screen==='truck'?truckView(): V.screen==='node'?nodeView(): V.screen==='addcomp'?addCompView(): V.screen==='move'?moveView(): V.screen==='trucks'?manageView(): V.screen==='gate'?gateView(): V.screen==='pin'?pinView(): V.screen==='roster'?rosterView(): V.screen==='log'?logView(): V.screen==='crew'?crewPage(): V.screen==='rsstart'?rsStartView(): V.screen==='access'?accessView(): V.screen==='more'?moreView(): V.screen==='kits'?kitsView(): V.screen==='reports'?reportsView(): V.screen==='bls'?blsView(): V.screen==='reqpick'?reqPickView(): V.screen==='reqtruck'?placeView(): V.screen==='reqlink'?reqLinkView(): V.screen==='restock'?restockHub(): V.screen==='history'?historyPage(): V.screen==='rsreview'?rsReviewView(): homeView();
   const showNav=!['reqpick','reqlink','rsstart','rsreview'].includes(V.screen); document.body.classList.toggle('nonav',!showNav); document.getElementById('app').innerHTML=html+(showNav?tabBar():'');
   Object.entries(keep).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
   od.forEach(id=>{ const d=document.getElementById(id); if(d) d.open=true; });
@@ -1357,9 +1404,23 @@ const A={
   quickadd:b=>{ const p=node(V.nid); const it=reqById(b.dataset.r); if(!p||!it) return false; const el=document.getElementById('aq_'+it.id); const qty=it.yn?0:Math.max(0,parseInt(el&&el.value)||Math.max(1,it.req)); const id='n'+uid();
     persist('nodes/'+id,{truck:p.truck,parent:p.id,name:it.name,order:nextOrder(p.id,p.truck),kind:'item',type:it.yn?'check':'count',par:qty,critical:false,req:it.id,fromList:true});
     logChange(p.truck,'Added '+it.name+(it.yn?'':' ('+qty+')')+' to '+fullPath(p.id)); toast(it.name+(it.yn?'':' ×'+qty)+' added'); V.addQ=''; render(); setTimeout(()=>{ const el=document.getElementById('addq'); if(el) el.focus(); },30); return false; },
-  quickown:()=>{ const p=node(V.nid); const name=(V.addQ||'').trim(); if(!p||!name) return false; const el=document.getElementById('aq__own'); const qty=Math.max(0,parseInt(el&&el.value)||1); const id='n'+uid();
+  quickown:()=>{ const p=node(V.nid); const name=(V.addQ||'').trim(); if(!p||!name) return false; const el=document.getElementById('aq__own'); const qty=Math.max(0,parseInt(el&&el.value)||1); const it=agencyItem(name,qty);
+    const nid='n'+uid(); persist('nodes/'+nid,{truck:p.truck,parent:p.id,name:it.name,order:nextOrder(p.id,p.truck),kind:'item',type:'count',par:qty,critical:false,req:it.id,fromList:true});
+    logChange(p.truck,'Added agency item "'+name+'" ('+qty+') to '+fullPath(p.id)); toast(name+' added to '+p.name+' and to your agency list'); V.addQ=''; render(); setTimeout(()=>{ const e2=document.getElementById('addq'); if(e2) e2.focus(); },30); return false; },
+  quickown_old:()=>{ const p=node(V.nid); const name=(V.addQ||'').trim(); if(!p||!name) return false; const el=document.getElementById('aq__own'); const qty=Math.max(0,parseInt(el&&el.value)||1); const id='n'+uid();
     persist('nodes/'+id,{truck:p.truck,parent:p.id,name,order:nextOrder(p.id,p.truck),kind:'item',type:'count',par:qty,critical:false});
     logChange(p.truck,'Added item "'+name+'" (should have '+qty+') in '+fullPath(p.id)); toast(name+' added'); V.addQ=''; render(); setTimeout(()=>{ const el=document.getElementById('addq'); if(el) el.focus(); },30); return false; },
+  kitsmore:()=>{ if(!isAdmin()) return false; V.setup=true; V.setupBy=me(); touchSetup(); V.kitBack=''; V.kitEdit=null; go('kits'); return false; },
+  kitspage:()=>{ V.kitEdit=null; V.kitQ=''; if(V.screen==='node'){ V.kitBack='node'; V.kitNid=V.nid; } go('kits'); return false; },
+  kitopen:b=>{ if(V.screen==='node'){ V.kitBack='node'; V.kitNid=V.nid; } V.kitEdit=b.dataset.k; V.kitQ=''; go('kits'); return false; },
+  kitcreate:()=>{ const el=document.getElementById('kitnew'); const name=(el?el.value:'').trim(); if(!name){ toast('Type the kit name first.'); return false; } const k=newKit(name); el.value=''; V.kitEdit=k.id; V.kitQ=''; render(); return false; },
+  kitnew:()=>{ const name=(V.addQ||'').trim(); if(!name) return false; const k=newKit(name); V.kitBack='node'; V.kitNid=V.nid; V.kitEdit=k.id; V.kitQ=''; V.addQ=''; go('kits'); toast('Kit made. Now add what is in it.'); return false; },
+  kitadditem:b=>{ const L=clone(kitDefs()); const kd=L.find(x=>x.id===V.kitEdit); if(!kd) return false; const el=document.getElementById('kq_'+b.dataset.r); const q=Math.max(1,parseInt(el&&el.value)||1); kd.contents=(kd.contents||[]).concat([{r:b.dataset.r,q}]); persist('meta/kits',{items:L}); const it=reqById(b.dataset.r); logChange('','Kit "'+kd.name+'": added '+(it?it.official:'item')+' ×'+q); V.kitQ=''; render(); setTimeout(()=>{ const e=document.getElementById('kitq'); if(e) e.focus(); },30); return false; },
+  kitaddown:()=>{ const name=(V.kitQ||'').trim(); if(!name) return false; const el=document.getElementById('kq__own'); const q=Math.max(1,parseInt(el&&el.value)||1); const it=agencyItem(name,0); const L=clone(kitDefs()); const kd=L.find(x=>x.id===V.kitEdit); if(!kd) return false; kd.contents=(kd.contents||[]).concat([{r:it.id,q}]); persist('meta/kits',{items:L}); logChange('','Kit "'+kd.name+'": added agency item '+name+' ×'+q); V.kitQ=''; render(); return false; },
+  kitrem:b=>{ const r=b.dataset.r; if(V.arm!=='kr'+r){ V.arm='kr'+r; return; } V.arm=null; const L=clone(kitDefs()); const kd=L.find(x=>x.id===V.kitEdit); if(!kd) return; kd.contents=(kd.contents||[]).filter(c=>c.r!==r); persist('meta/kits',{items:L}); logChange('','Kit "'+kd.name+'": removed '+((reqById(r)||{}).official||'item')); },
+  kitdel:()=>{ if(V.arm!=='kitdel'){ V.arm='kitdel'; return; } V.arm=null; const kd=kitById(V.kitEdit); if(!kd) return; allNodes().filter(n=>n.kit===kd.id).forEach(n=>deleteNode(n.id)); persist('meta/kits',{items:kitDefs().filter(k=>k.id!==kd.id)}); logChange('','Deleted kit "'+kd.name+'"'); V.kitEdit=null; toast('Kit deleted'); },
+  kitplace:b=>{ const p=node(V.nid); const kd=kitById(b.dataset.k); if(!p||!kd) return false; const el=document.getElementById('aqk_'+kd.id); const q=Math.max(1,parseInt(el&&el.value)||1); const id='n'+uid();
+    persist('nodes/'+id,{truck:p.truck,parent:p.id,name:kd.name,order:nextOrder(p.id,p.truck),kind:'item',type:'count',par:q,critical:false,kit:kd.id}); logChange(p.truck,'Placed '+q+' × '+kd.name+' in '+fullPath(p.id)); toast(q+' × '+kd.name+' added'); V.addQ=''; render(); return false; },
   reqpick:()=>{ V.reqSel={}; V.reqAll=false; V.reqQ=''; go('reqpick',{nid:V.nid}); return false; },
   reqall:b=>{ V.reqAll=!!b.dataset.v; },
   reqtog:b=>{ V.reqSel=V.reqSel||{}; const id=b.dataset.r; if(V.reqSel[id]) delete V.reqSel[id]; else V.reqSel[id]=1; },
@@ -1396,7 +1457,7 @@ const A={
   tab_check:()=>{ const u=homeUnit(); V.setup=false; SS.set('rc3-setup',null); V.backTo=''; if(!u){ go('home'); return false; } go('truck',{tid:u.id,q:'',tab:'truck'}); return false; },
   tab_restock:()=>{ const u=homeUnit(); V.setup=false; SS.set('rc3-setup',null); V.backTo=''; if(!u){ go('home'); return false; } if(RS()&&RS().tid===u.id){ go('truck',{tid:u.id,q:''}); return false; } go('restock',{tid:u.id,q:''}); return false; },
   tab_setup:()=>{ if(!isAdmin()) return false; const u=homeUnit(); V.setup=true; V.setupBy=me(); touchSetup(); V.backTo=''; if(u) go('truck',{tid:u.id,q:'',tab:'truck'}); else go('home'); return false; },
-  tab_more:()=>{ V.setup=false; SS.set('rc3-setup',null); V.backTo=''; go('more'); return false; },
+  tab_more:()=>{ V.kitEdit=null; V.setup=false; SS.set('rc3-setup',null); V.backTo=''; go('more'); return false; },
   unitsheet:()=>{ V.unitSheet=true; },
   unitsheetx:()=>{ V.unitSheet=false; },
   unitset:b=>{ V.unit=b.dataset.t; ls.set('rc3-unit',V.unit); V.unitSheet=false; const sc=V.screen; if(['truck','node','move','restock','history'].includes(sc)){ if(sc==='node'||sc==='move') go('truck',{tid:V.unit,q:''}); else { V.tid=V.unit; V.q=''; render(); } return false; } },
@@ -1471,7 +1532,7 @@ const A={
     else { const k=checksOf(x.tid)[0]; if(k){ const rc=clone(k); const kid=rc.id; delete rc.id; let ch=false; (rc.failed||[]).forEach(f=>{ const hit=items.find(it=>it.node===f.node); if(hit&&!f.restocked){ f.restocked=true; ch=true; rc.restocked=(rc.restocked||[]).concat([{node:f.node,name:f.name,path:f.path,qty:hit.qty,t:now,by,run:x.run||''}]); } }); if(ch) persist('checks/'+kid,rc); } }
     setRS(null); toast('Restock saved: '+items.reduce((a,b)=>a+b.qty,0)+' items'); go('truck',{tid:x.tid,tab:'history'}); return false; },
   setme:b=>{ setMe(b.dataset.v); toast('This phone is now '+b.dataset.v); },
-  back:()=>{ const s=V.screen; if(s==='bls'){ blsLog(); V.blsEdit=false; } if(s==='reqpick'){ openNode(V.nid); return false; } if(s==='reqlink'){ const n=node(V.linkId); V.linkId=null; if(n) openNode(n.id); else go('truck'); return false; } if(s==='reqtruck'){ V.placeFor=null; V.aliasFor=null; go('truck'); return false; } if(['log','crew','restock','history','bls'].includes(s)&&V.backTo==='reports'){ V.backTo=''; go('reports'); return false; } if(['reports','history','bls','crew','log','access'].includes(s)||(s==='trucks'&&V.fromMore)){ V.backTo=''; V.fromMore=false; if(s==='trucks'||s==='access'){ V.setup=false; } go('more'); return false; } if(['pin','roster','trucks','gate','restock'].includes(s)){ V.backTo=''; go('home'); return false; } if(s==='rsstart'){ go('restock'); return false; } if(s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
+  back:()=>{ const s=V.screen; if(s==='kits'){ if(V.kitEdit&&!(V.kitBack==='node'&&V.kitNid)){ V.kitEdit=null; V.kitQ=''; render(); return false; } V.kitEdit=null; V.kitQ=''; if(V.kitBack==='node'&&V.kitNid){ V.kitBack=''; openNode(V.kitNid); return false; } V.kitBack=''; V.setup=false; SS.set('rc3-setup',null); go('more'); return false; } if(s==='bls'){ blsLog(); V.blsEdit=false; } if(s==='reqpick'){ openNode(V.nid); return false; } if(s==='reqlink'){ const n=node(V.linkId); V.linkId=null; if(n) openNode(n.id); else go('truck'); return false; } if(s==='reqtruck'){ V.placeFor=null; V.aliasFor=null; go('truck'); return false; } if(['log','crew','restock','history','bls'].includes(s)&&V.backTo==='reports'){ V.backTo=''; go('reports'); return false; } if(['reports','history','bls','crew','log','access'].includes(s)||(s==='trucks'&&V.fromMore)){ V.backTo=''; V.fromMore=false; if(s==='trucks'||s==='access'){ V.setup=false; } go('more'); return false; } if(['pin','roster','trucks','gate','restock'].includes(s)){ V.backTo=''; go('home'); return false; } if(s==='rsstart'){ go('restock'); return false; } if(s==='rsreview'){ go('truck'); return false; } if(s==='node'){ const n=node(V.nid); if(n&&n.parent) openNode(n.parent); else go('truck',{tid:n?n.truck:V.tid}); } else if(s==='move'){ V.moveId=null; V.screen=V.moveFrom||'truck'; render(); } else if(s==='addcomp') go('truck'); else go('home',{q:''}); return false; },
   open:b=>{ openNode(b.dataset.n); return false; },
   tab:b=>{ V.tab=b.dataset.v; V.finishArm=false; },
   clearq:()=>{ V.q=''; render(); const el=document.getElementById('q'); if(el) el.focus(); return false; },
@@ -1538,8 +1599,8 @@ const A={
   install:()=>{ if(installEvt){ installEvt.prompt(); installEvt=null; } },
   hideinstall:()=>{ ls.set('rc3-hideinstall',true); }
 };
-const ARMED=['plocdel','customdel','del','discard','tdel','photodel','rscancel','accremove','accrevoke','signout'];
-const SETUP_ONLY=['quickadd','quickown','placefor','plocadd','plocdel','placeskip','aliasedit','aliassave','customadd','customdel','reqpick','reqadd','reqlink','reqlinkset','reqtruck','addcomp','savecomp','addchild','up','del','move','moveto','photo','photodel','spotsel','spotdel','spotnew','tmove','tdel','tadd','manage','pinpage','savepin','rosterpage','rosteradd','rosterdel'];
+const ARMED=['kitrem','kitdel','plocdel','customdel','del','discard','tdel','photodel','rscancel','accremove','accrevoke','signout'];
+const SETUP_ONLY=['kitcreate','kitnew','kitadditem','kitaddown','kitrem','kitdel','kitplace','quickadd','quickown','placefor','plocadd','plocdel','placeskip','aliasedit','aliassave','customadd','customdel','reqpick','reqadd','reqlink','reqlinkset','reqtruck','addcomp','savecomp','addchild','up','del','move','moveto','photo','photodel','spotsel','spotdel','spotnew','tmove','tdel','tadd','manage','pinpage','savepin','rosterpage','rosteradd','rosterdel'];
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
   const act=b.dataset.act; if(!ARMED.includes(act)&&act!=='rosterdel') V.arm=null; touchSetup();
@@ -1547,9 +1608,9 @@ document.addEventListener('click',e=>{
   const r=A[act]&&A[act](b,e); if(r!==false) render();
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&(e.target.id==='sicode'||e.target.id==='siname')){ A.signin(); } if(e.key==='Enter'&&e.target.id==='rsnew'){ A.rsaddname(); render(); } if(e.key==='Enter'&&e.target.id==='crewnew'){ A.crewadd(); render(); } if(e.key==='Enter'&&e.target.id==='gpin'&&!document.getElementById('gpin2')){ if(A.entersetup()!==false) render(); } if(e.key==='Enter'&&e.target.id==='q') e.target.blur(); if(e.key==='Enter'&&e.target.id==='newname'){ A.addchild(); render(); } });
-document.addEventListener('input',e=>{ if(e.target.dataset.inp==='q'){ V.q=e.target.value; render(); } if(e.target.dataset.inp==='reqq'){ V.reqQ=e.target.value; render(); } if(e.target.dataset.inp==='addq'){ V.addQ=e.target.value; render(); } });
+document.addEventListener('input',e=>{ if(e.target.dataset.inp==='q'){ V.q=e.target.value; render(); } if(e.target.dataset.inp==='reqq'){ V.reqQ=e.target.value; render(); } if(e.target.dataset.inp==='addq'){ V.addQ=e.target.value; render(); } if(e.target.dataset.inp==='kitq'){ V.kitQ=e.target.value; render(); } });
 document.addEventListener('change',e=>{ if(e.target.id==='gname'){ const nw=document.getElementById('gnew'); if(nw) nw.hidden=e.target.value!=='__new'; return; }
-  const t=e.target,k=t.dataset.chg; if(!k) return; if(k==='bls'){ if(isAdmin()){ blsSet(t.dataset.t,t.dataset.r,t.value.trim()); } return; } if(k==='rsrun'){ const x=RS(); if(x){ x.run=t.value.trim(); setRS(x); } return; } if(!V.setup){ render(); return; } touchSetup();
+  const t=e.target,k=t.dataset.chg; if(!k) return; if(k==='kitname'||k==='kitqty'){ if(!isAdmin()) return; const L=clone(kitDefs()); const kd=L.find(x=>x.id===t.dataset.k); if(!kd) return; if(k==='kitname'){ const v=t.value.trim(); if(v&&v!==kd.name){ logChange('','Renamed kit "'+kd.name+'" to "'+v+'"'); kd.name=v; allNodes().filter(n=>n.kit===kd.id).forEach(n=>{ n.name=v; saveNode(n); }); } } else { const c=kd.contents.find(x=>x.r===t.dataset.r); const v=Math.max(1,parseInt(t.value)||1); if(c&&c.q!==v){ c.q=v; logChange('','Kit "'+kd.name+'": '+((reqById(c.r)||{}).official||'item')+' now '+v+' per kit'); } } persist('meta/kits',{items:L}); render(); return; } if(k==='bls'){ if(isAdmin()){ blsSet(t.dataset.t,t.dataset.r,t.value.trim()); } return; } if(k==='rsrun'){ const x=RS(); if(x){ x.run=t.value.trim(); setRS(x); } return; } if(!V.setup){ render(); return; } touchSetup();
   if(k==='tname'){ const tr=truck(t.dataset.t); if(tr){ const o=clone(tr); delete o.id; o.name=t.value.trim()||tr.name; if(o.name!==tr.name){ persist('trucks/'+tr.id,o); logChange(tr.id,'Renamed truck '+tr.name+' to '+o.name); } } render(); return; }
   if(k==='spotnode'){ const n=node(V.nid); n.spots=(n.spots||[]).map(s=>s.id===t.dataset.s?Object.assign({},s,{node:t.value}):s); saveNode(n); if(t.value){ const kk=node(t.value); logChange(n.truck,'Linked a box on the photo of '+fullPath(n.id)+' to "'+(kk?kk.name:'')+'"'); V.spotSel=null; } render(); return; }
   const n=node(t.dataset.n); if(!n) return; const before=clone(n); const where=fullPath(n.id);
