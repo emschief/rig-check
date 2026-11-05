@@ -319,7 +319,7 @@ table.bls tr.grp td.eq{background:var(--bg)}
 table.bls td.c input{width:52px;font:inherit;text-align:center;padding:6px 2px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 table.bls td.c button{min-width:46px;min-height:38px;border-radius:8px;border:1.5px solid var(--line);background:var(--bg);font:inherit;color:inherit}
 .blsnote{font-size:13px;color:var(--muted)}
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--panel);transform:translateZ(0);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
 .tabbar .in{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;width:100%;max-width:640px}
 .tabbar button{display:grid;justify-items:center;gap:2px;border:0;background:none;padding:6px 2px;border-radius:12px;color:var(--muted);font-size:12px;font-weight:700;min-height:54px;position:relative}
 .tabbar button svg{width:26px;height:26px}
@@ -454,10 +454,13 @@ table.bls td.c .autolbl{display:block;font-size:11px;font-weight:600;font-family
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 /* ---------- visual polish ---------- */
-:root{--navh:84px;--sh1:0 1px 2px rgba(16,30,58,.06),0 6px 18px -10px rgba(16,30,58,.22);--sh2:0 2px 4px rgba(16,30,58,.06),0 18px 40px -18px rgba(16,30,58,.38);
+button,a,input,select,label,summary{touch-action:manipulation}
+html{-webkit-text-size-adjust:100%}
+.item,.kid,.erow,.pcard,.placed,.reqrow{content-visibility:auto;contain-intrinsic-size:auto 110px}
+:root{--navh:84px;--sh1:0 1px 2px rgba(16,30,58,.06),0 3px 8px -4px rgba(16,30,58,.16);--sh2:0 2px 4px rgba(16,30,58,.06),0 18px 40px -18px rgba(16,30,58,.38);
   --navy1:#0E1B33;--navy2:#1B3A6B;--teal:#0B7A6E;--indigo:#4655C4;--orange:#E8590C;--line2:rgba(19,32,58,.09)}
-@media (prefers-color-scheme: dark){:root{--sh1:0 1px 2px rgba(0,0,0,.4),0 8px 22px -12px rgba(0,0,0,.7);--sh2:0 2px 6px rgba(0,0,0,.4),0 20px 44px -18px rgba(0,0,0,.8);--navy1:#0A1424;--navy2:#17305A;--line2:rgba(255,255,255,.07);--indigo:#8D98F0;--teal:#2FB3A3}}
-body{background:radial-gradient(1200px 520px at 50% -180px,color-mix(in srgb,var(--accent) 16%,transparent),transparent 70%),var(--bg);background-attachment:fixed}
+@media (prefers-color-scheme: dark){:root{--sh1:0 1px 2px rgba(0,0,0,.45);--sh2:0 2px 6px rgba(0,0,0,.4),0 20px 44px -18px rgba(0,0,0,.8);--navy1:#0A1424;--navy2:#17305A;--line2:rgba(255,255,255,.07);--indigo:#8D98F0;--teal:#2FB3A3}}
+body{background:radial-gradient(1200px 520px at 50% -180px,color-mix(in srgb,var(--accent) 16%,transparent),transparent 70%),var(--bg);background-repeat:no-repeat}
 h1{letter-spacing:.005em}
 .card,.person,.repcard,.placed,.pcard,.blswrap,.mlist,.reqrow,.urow,.qbtn,.kid,.item,.rsrow,.need,.erow,.hist,.ccard,.tcard,.step,.blssum div{box-shadow:var(--sh1);border-color:var(--line2)}
 .card{border-radius:20px}
@@ -517,7 +520,7 @@ h1{letter-spacing:.005em}
 .rt{border-radius:12px}
 .checkcard{border-radius:22px}
 /* tab bar: floating */
-.tabbar{left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom,0px));padding:6px;border:1px solid var(--line2);border-radius:24px;background:color-mix(in srgb,var(--panel) 86%,transparent);box-shadow:0 12px 32px -14px rgba(16,30,58,.45)}
+.tabbar{left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom,0px));padding:6px;border:1px solid var(--line2);border-radius:24px;background:var(--panel);box-shadow:0 6px 16px -8px rgba(16,30,58,.35)}
 .tabbar button{border-radius:18px;min-height:56px;font-size:12px;transition:background .15s ease,color .15s ease}
 .tabbar button[aria-current="page"]{background:color-mix(in srgb,var(--accent) 14%,transparent)}
 .tabbar button[aria-current="page"] svg{transform:translateY(-1px)}
@@ -574,7 +577,7 @@ const tok=()=>ls.get('rc3-token','');
 const who=()=>ls.get('rc3-who',null)||(LOCAL?{name:ls.get('rc3-me','')||'Local tester',role:'owner'}:null);
 const isAdmin=()=>{ const w=who(); return !!w&&(w.role==='owner'||w.role==='supervisor'); };
 function authLost(msg){ ['rc3-token','rc3-who','rc3-docs','rc3-queue','rc3-v','rc3-restock'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
-  D={}; Q={}; lastV=null; loaded=false; V.setup=false; SS.set('rc3-setup',null); V.screen='signin'; V.authMsg=msg||''; render(); }
+  D={}; bust(); Q={}; lastV=null; loaded=false; V.setup=false; SS.set('rc3-setup',null); V.screen='signin'; V.authMsg=msg||''; render(); }
 function call(fn,...args){
   if(GAS) return new Promise((res,rej)=>{ GAS.withSuccessHandler(res).withFailureHandler(rej)[fn](...args); });
   if(LOCAL) return new Promise((res,rej)=>setTimeout(()=>{ try{ res(Local[fn](...args)); }catch(e){ rej(e); } },20));
@@ -591,15 +594,19 @@ const IDB={ db:null,
 
 /* ---------- store with offline queue ---------- */
 let D=ls.get('rc3-docs',{}); let lastV=ls.get('rc3-v',null);
+let MEMO={}; const bust=()=>{ MEMO={}; }; const memo=(k,f)=>(k in MEMO)?MEMO[k]:(MEMO[k]=f());
+let docsT=null; const saveDocsSoon=()=>{ clearTimeout(docsT); docsT=setTimeout(()=>{ docsT=null; ls.set('rc3-docs',D); },600); };
+window.addEventListener('pagehide',()=>{ if(docsT){ clearTimeout(docsT); ls.set('rc3-docs',D); } });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&docsT){ clearTimeout(docsT); docsT=null; ls.set('rc3-docs',D); } });
 let Q=ls.get('rc3-queue',{});
 let loaded=Object.keys(D).length>0, online=true, pulling=false, flushing=false, flushT=null;
 function persist(path,obj){
-  if(obj===null) delete D[path]; else D[path]=obj;
+  if(obj===null) delete D[path]; else D[path]=obj; bust();
   Q[path]= obj===null?null:JSON.stringify(obj);
-  ls.set('rc3-queue',Q); ls.set('rc3-docs',D);
+  ls.set('rc3-queue',Q); saveDocsSoon();
   clearTimeout(flushT); flushT=setTimeout(flush,400);
 }
-function persistMany(list){ list.forEach(([p,o])=>{ if(o===null) delete D[p]; else D[p]=o; Q[p]= o===null?null:JSON.stringify(o); }); ls.set('rc3-queue',Q); ls.set('rc3-docs',D); clearTimeout(flushT); flushT=setTimeout(flush,200); }
+function persistMany(list){ list.forEach(([p,o])=>{ if(o===null) delete D[p]; else D[p]=o; Q[p]= o===null?null:JSON.stringify(o); }); bust(); ls.set('rc3-queue',Q); saveDocsSoon(); clearTimeout(flushT); flushT=setTimeout(flush,200); }
 async function flush(){
   if(flushing) return; const keys=Object.keys(Q); if(!keys.length) return;
   flushing=true; const sent={}; keys.forEach(k=>sent[k]=Q[k]);
@@ -624,7 +631,7 @@ async function pull(){
       lastV=r.v; const nd={};
       for(const [p,j] of Object.entries(r.docs||{})){ try{ nd[p]=JSON.parse(j); }catch(e){} }
       Object.keys(Q).forEach(p=>{ if(Q[p]===null) delete nd[p]; else nd[p]=JSON.parse(Q[p]); });
-      D=nd; ls.set('rc3-docs',D); ls.set('rc3-v',lastV);
+      D=nd; bust(); ls.set('rc3-docs',D); ls.set('rc3-v',lastV);
       const first=!loaded; loaded=true;
       if(!D['meta/schema']||D['meta/schema'].v<SCHEMA) ensureSchema();
       if(first||!drag) render();
@@ -634,21 +641,22 @@ async function pull(){
 }
 
 /* ---------- derived ---------- */
-const list=prefix=>Object.keys(D).filter(p=>p.startsWith(prefix)).map(p=>Object.assign({},D[p],{id:p.slice(prefix.length)}));
-const trucks=()=>list('trucks/').sort((a,b)=>(a.order||0)-(b.order||0));
+const list=prefix=>memo('L:'+prefix,()=>Object.keys(D).filter(p=>p.startsWith(prefix)).map(p=>Object.assign({},D[p],{id:p.slice(prefix.length)})));
+const trucks=()=>memo('trucks',()=>list('trucks/').slice().sort((a,b)=>(a.order||0)-(b.order||0)));
 const truck=tid=>{ const t=D['trucks/'+tid]; return t?Object.assign({},t,{id:tid}):null; };
 const node=id=>{ const n=D['nodes/'+id]; return n?Object.assign({},n,{id}):null; };
 const allNodes=()=>list('nodes/');
-const kidsOf=id=>allNodes().filter(n=>n.parent===id).sort((a,b)=>(a.kind==='item')-(b.kind==='item')||(a.order||0)-(b.order||0));
-const topComps=tid=>allNodes().filter(n=>n.truck===tid&&!n.parent).sort((a,b)=>(LOC_RANK[a.loc]-LOC_RANK[b.loc])||(a.order||0)-(b.order||0));
+const byParent=()=>memo('byP',()=>{ const m={}; allNodes().forEach(n=>{ (m[n.parent||'']=m[n.parent||'']||[]).push(n); }); return m; });
+const kidsOf=id=>memo('k:'+id,()=>(byParent()[id]||[]).slice().sort((a,b)=>(a.kind==='item')-(b.kind==='item')||(a.order||0)-(b.order||0)));
+const topComps=tid=>memo('tc:'+tid,()=>allNodes().filter(n=>n.truck===tid&&!n.parent).sort((a,b)=>(LOC_RANK[a.loc]-LOC_RANK[b.loc])||(a.order||0)-(b.order||0)));
 function ancestors(id){ const out=[]; let n=node(id); let g=0; while(n&&n.parent&&g++<30){ n=node(n.parent); if(n) out.unshift(n); } return out; }
 function descendants(id){ const out=[]; const walk=p=>allNodes().filter(n=>n.parent===p).forEach(n=>{ out.push(n); walk(n.id); }); walk(id); return out; }
 const itemsUnder=id=>descendants(id).filter(n=>n.kind==='item');
-const truckItems=tid=>allNodes().filter(n=>n.truck===tid&&n.kind==='item');
+const truckItems=tid=>memo('ti:'+tid,()=>allNodes().filter(n=>n.truck===tid&&n.kind==='item'));
 const pathText=id=>ancestors(id).map(a=>a.code||a.name).join(' › ');
 const curOf=tid=>D['current/'+tid]||null;
-const checksOf=tid=>list('checks/').filter(k=>k.truck===tid).sort((a,b)=>b.ts-a.ts);
-const photosFor=key=>list('photos/').filter(p=>p.comp===key).sort((a,b)=>(a.t||0)-(b.t||0));
+const checksOf=tid=>memo('ch:'+tid,()=>list('checks/').filter(k=>k.truck===tid).sort((a,b)=>b.ts-a.ts));
+const photosFor=key=>memo('ph:'+key,()=>list('photos/').filter(p=>p.comp===key).sort((a,b)=>(a.t||0)-(b.t||0)));
 function saveNode(n){ const o=clone(n); const id=o.id; delete o.id; persist('nodes/'+id,o); }
 const nextOrder=(parent,tid)=>Math.max(0,...allNodes().filter(n=>(n.parent||'')===(parent||'')&&n.truck===tid).map(n=>n.order||0))+1;
 
@@ -788,7 +796,7 @@ const RS=()=>ls.get('rc3-restock',null);
 const setRS=v=>ls.set('rc3-restock',v);
 const rsOn=tid=>{ const x=RS(); return (!V.setup&&x&&tid&&x.tid===tid)?x:null; };
 const rsCount=x=>Object.values(x.items||{}).reduce((a,b)=>a+b,0);
-const restocksOf=tid=>list('restocks/').filter(k=>k.truck===tid).sort((a,b)=>b.ts-a.ts);
+const restocksOf=tid=>memo('rs:'+tid,()=>list('restocks/').filter(k=>k.truck===tid).sort((a,b)=>b.ts-a.ts));
 function rsBand(x){ return '<div class="rsband" role="status"><span class="t"><b>RESTOCK AFTER A CALL</b><small>Started '+fmtT(x.started)+' · '+esc(crewText(x.crew))+'</small></span><button data-act="rscancel">'+(V.arm==='rscancel'?'Tap again to cancel':'Cancel')+'</button></div>'; }
 function rsBasket(x){ const n=Object.keys(x.items||{}).length; return '<div class="basket"><span><b>'+n+' item'+(n===1?'':'s')+'</b>'+(n?' · '+rsCount(x)+' total':'<br><small class="muted">Tap + on what you used</small>')+'</span><button class="btn go" data-act="rsreview" '+(n?'':'disabled')+'>Review &amp; save</button></div>'; }
 function rsStep(id,x){ const q=(x.items||{})[id]||0; return q?'<div class="step"><button data-act="rsdec" data-n="'+esc(id)+'" aria-label="One less">−</button><output>'+q+'</output><button data-act="rsinc" data-n="'+esc(id)+'" aria-label="One more">+</button></div>':'<button class="btn small rsadd" data-act="rsinc" data-n="'+esc(id)+'">+ Restock</button>'; }
@@ -891,12 +899,12 @@ let STATE_ALIAS={}; let BLS=BLS_BUILTIN; let STATE_INFO={v:'built-in',src:'Ver 1
 function stateToGroups(st){ if(!st||!Array.isArray(st.rows)||st.rows.length<20) return null; const G=[]; const by={};
   const SA={}; st.rows.forEach(r=>{ const [id,lvl,sec,name,req,yn,opt,note,cn]=r; if(cn) SA[id]=cn; let g=by[sec]; if(!g){ g={g:sec,lvl:lvl==='IALS'?'IALS':undefined,items:[],_opt:true,note:''}; by[sec]=g; G.push(g); } g.items.push([id,name,+req||0,yn==='yn'?'yn':'']); if(!opt) g._opt=false; if(note&&!g.note) g.note=note; });
   G.forEach(g=>{ g.opt=g._opt; delete g._opt; if(!g.note) delete g.note; }); STATE_ALIAS=SA; return G; }
-function applyState(st){ const G=stateToGroups(st); if(!G) return false; BLS=G; STATE_INFO={v:st.v||'',src:st.src||''}; return true; }
+function applyState(st){ const G=stateToGroups(st); if(!G) return false; bust(); BLS=G; STATE_INFO={v:st.v||'',src:st.src||''}; return true; }
 try{ const st=JSON.parse(localStorage.getItem('rc3-state')||'null'); if(st) applyState(st); }catch(e){}
 let stateAt=0;
 async function loadState(){ if(LOCAL||!tok()||Date.now()-stateAt<30*60000) return; stateAt=Date.now(); try{ const st=await call('stateList'); if(st&&applyState(st)){ try{ localStorage.setItem('rc3-state',JSON.stringify(st)); }catch(e){} render(); } }catch(e){ stateAt=0; } }
 const agencyAlias=()=>(D['meta/alias']&&D['meta/alias'].a)||{};
-const aliasMap=()=>Object.assign({},STATE_ALIAS,agencyAlias());
+const aliasMap=()=>memo('am',()=>Object.assign({},STATE_ALIAS,agencyAlias()));
 const customReq=()=>(D['meta/customreq']&&D['meta/customreq'].items)||[];
 const nm2=(t,sub)=>'<b>'+esc(t)+'</b>'+(sub?'<span class="aka">'+esc(sub)+'</span>':'');
 const AGB='<span class="agb">Agency item · not on state list</span>';
@@ -906,25 +914,29 @@ function nodeNameHTML(n){ if(n.kit){ const k=kitById(n.kit); return nm2(n.name,'
   if(n.fromList) return it.alias?nm2(it.alias,it.official):nm2(it.official,'');
   const base=String(n.name||''); return nm2(base, base.toLowerCase()===String(it.official).toLowerCase()?(it.alias||''):it.official); }
 const reqDisp=(id,name)=>{ const a=aliasMap()[id]; return a?a+' ('+name+')':name; };
-function reqGroups(){ const base=BLS.concat(customReq().length?[{g:'Our agency\'s items',custom:true,items:customReq().map(c=>[c.id,c.name,+c.req||0,c.yn?'yn':''])}]:[]);
+function reqGroups(){ return memo('rg',reqGroups_); }
+function reqGroups_(){ const base=BLS.concat(customReq().length?[{g:'Our agency\'s items',custom:true,items:customReq().map(c=>[c.id,c.name,+c.req||0,c.yn?'yn':''])}]:[]);
   return base.map(g=>Object.assign({},g,{items:g.items.map(it=>[it[0],reqDisp(it[0],it[1]),it[2],it[3],it[1]])})); }
-const blsAll=()=>reqGroups().flatMap(g=>g.items.map(it=>({id:it[0],name:it[1],official:it[4],alias:aliasMap()[it[0]]||'',req:it[2],yn:it[3]==='yn',opt:!!g.opt,g:g.g,lvl:g.lvl||'BLS',custom:!!g.custom})));
+const blsAll=()=>memo('ba',()=>reqGroups().flatMap(g=>g.items.map(it=>({id:it[0],name:it[1],official:it[4],alias:aliasMap()[it[0]]||'',req:it[2],yn:it[3]==='yn',opt:!!g.opt,g:g.g,lvl:g.lvl||'BLS',custom:!!g.custom}))));
 const blsDoc=tid=>D['bls/'+tid]||{c:{}};
-const reqById=id=>blsAll().find(x=>x.id===id);
-const reqLinked=(tid,rid)=>allNodes().filter(n=>n.truck===tid&&n.kind==='item'&&n.req===rid);
+const reqById=id=>memo('rbi',()=>{ const m={}; blsAll().forEach(x=>m[x.id]=x); return m; })[id];
+const reqLinked=(tid,rid)=>memo('rqi',()=>{ const m={}; allNodes().forEach(n=>{ if(n.kind==='item'&&n.req){ const k=n.truck+'|'+n.req; (m[k]=m[k]||[]).push(n); } }); return m; })[tid+'|'+rid]||[];
 const kitDefs=()=>(D['meta/kits']&&D['meta/kits'].items)||[];
 const kitById=id=>kitDefs().find(k=>k.id===id);
-const kitNodes=tid=>allNodes().filter(n=>n.truck===tid&&n.kind==='item'&&n.kit);
-function reqKitUses(tid,rid){ const out=[]; kitNodes(tid).forEach(n=>{ const k=kitById(n.kit); if(!k) return; const c=(k.contents||[]).find(x=>x.r===rid); if(c) out.push({node:n,kit:k,per:+c.q||1,kits:+n.par||0,qty:(+c.q||1)*(+n.par||0)}); }); return out; }
+const kitNodes=tid=>memo('kn:'+tid,()=>allNodes().filter(n=>n.truck===tid&&n.kind==='item'&&n.kit));
+function reqKitUses(tid,rid){ return memo('ku:'+tid+'|'+rid,()=>reqKitUses_(tid,rid)); }
+function reqKitUses_(tid,rid){ const out=[]; kitNodes(tid).forEach(n=>{ const k=kitById(n.kit); if(!k) return; const c=(k.contents||[]).find(x=>x.r===rid); if(c) out.push({node:n,kit:k,per:+c.q||1,kits:+n.par||0,qty:(+c.q||1)*(+n.par||0)}); }); return out; }
 const reqPlacedQty=(tid,it)=>reqLinked(tid,it.id).reduce((a,n)=>a+(n.type==='count'?(+n.par||0):1),0)+reqKitUses(tid,it.id).reduce((a,u)=>a+u.qty,0);
 const reqHas=(tid,it)=>reqLinked(tid,it.id).length+reqKitUses(tid,it.id).length;
-function reqAuto(tid,it){ const L=reqLinked(tid,it.id); const K=reqKitUses(tid,it.id); if(!L.length&&!K.length) return null; const ids=new Set(L.map(n=>n.id)); const per={}; K.forEach(u=>per[u.node.id]=u.per);
+function reqAuto(tid,it){ return memo('ra:'+tid+'|'+it.id,()=>reqAuto_(tid,it)); }
+function reqAuto_(tid,it){ const L=reqLinked(tid,it.id); const K=reqKitUses(tid,it.id); if(!L.length&&!K.length) return null; const ids=new Set(L.map(n=>n.id)); const per={}; K.forEach(u=>per[u.node.id]=u.per);
   const placed=reqPlacedQty(tid,it); const last=checksOf(tid)[0];
   const lost=last?(last.failed||[]).filter(f=>(ids.has(f.node)||per[f.node])&&!f.restocked).reduce((a,f)=>a+(+f.need||1)*(per[f.node]||1),0):0;
   let v=Math.max(0,placed-lost); if(it.yn) v=v>=1?1:0; return v; }
 function blsVal(tid,it){ const a=reqAuto(tid,it); if(a!=null) return a; const v=(blsDoc(tid).c||{})[it.id]; return v==null||v===''?null:+v; }
 function blsState(tid,it){ const v=blsVal(tid,it); if(v==null) return 'none'; if(it.opt) return 'info'; return v>=Math.max(1,it.req)?'ok':'short'; }
-function blsTally(tid){ const L=blsAll().filter(x=>!x.opt&&!x.custom); let ok=0,sh=0,no=0; L.forEach(it=>{ const s=blsState(tid,it); if(s==='ok') ok++; else if(s==='short') sh++; else no++; }); return {ok,sh,no,total:L.length}; }
+function blsTally(tid){ return memo('bt:'+tid,()=>blsTally_(tid)); }
+function blsTally_(tid){ const L=blsAll().filter(x=>!x.opt&&!x.custom); let ok=0,sh=0,no=0; L.forEach(it=>{ const s=blsState(tid,it); if(s==='ok') ok++; else if(s==='short') sh++; else no++; }); return {ok,sh,no,total:L.length}; }
 function blsView(){
   const T=trucks(); const ed=V.blsEdit&&isAdmin(); const only=V.blsShort;
   const sum='<div class="blssum">'+T.map(t=>{ const x=blsTally(t.id); const d=blsDoc(t.id);
